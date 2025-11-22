@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import API_BASE_URL from '../../config';
 
 export default function ShiftCreateModal({ onClose, onCreate }) {
     const [formData, setFormData] = useState({
@@ -12,25 +13,37 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
     const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const fetchData = async () => {
+            const token = localStorage.getItem('token');
 
-        // Fetch Users
-        fetch('http://localhost:3001/api/users', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setUsers(data));
+            try {
+                const [usersRes, tasksRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/users`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                    fetch(`${API_BASE_URL}/tasks`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    })
+                ]);
 
-        // Fetch Tasks
-        fetch('http://localhost:3001/api/tasks', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setTasks(data));
+                const usersData = await usersRes.json();
+                setUsers(usersData);
+
+                const tasksData = await tasksRes.json();
+                setTasks(tasksData);
+            } catch (error) {
+                console.error('Failed to fetch data:', error);
+            }
+        };
+
+        fetchData();
     }, []);
 
-    const handleSubmit = (e) => {
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         const token = localStorage.getItem('token');
 
         const payload = {
@@ -39,7 +52,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
             end_time: formData.end_time ? new Date(formData.end_time).toISOString() : null
         };
 
-        fetch('http://localhost:3001/api/shifts/create', {
+        fetch(`${API_BASE_URL}/shifts`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -51,7 +64,8 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                 if (res.ok) onCreate();
                 else alert('Failed to create shift');
             })
-            .catch((err) => console.error(err));
+            .catch((err) => console.error(err))
+            .finally(() => setLoading(false));
     };
 
     return (
@@ -84,6 +98,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             value={formData.user_id}
                             onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
                             required
+                            disabled={loading}
                         >
                             <option value="">Select Employee</option>
                             {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -96,6 +111,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             value={formData.task_id}
                             onChange={(e) => setFormData({ ...formData, task_id: e.target.value })}
                             required
+                            disabled={loading}
                         >
                             <option value="">Select Task</option>
                             {tasks.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -110,6 +126,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                                 value={formData.start_time}
                                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                                 required
+                                disabled={loading}
                             />
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -119,6 +136,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                                 className="form-input"
                                 value={formData.end_time}
                                 onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                disabled={loading}
                             />
                         </div>
                     </div>
@@ -129,11 +147,14 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows="3"
+                            disabled={loading}
                         />
                     </div>
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem' }}>
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>Create Shift</button>
+                        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }} disabled={loading}>
+                            {loading ? 'Creating...' : 'Create Shift'}
+                        </button>
                     </div>
                 </form>
             </div>

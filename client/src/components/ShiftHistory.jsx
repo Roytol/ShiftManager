@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatTime, formatDuration } from '../utils/formatters';
 import RequestEditModal from './RequestEditModal';
+import API_BASE_URL from '../config';
+import LoadingSpinner from './LoadingSpinner';
 
-export default function ShiftHistory() {
+const ShiftHistory = () => {
     const [shifts, setShifts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingShift, setEditingShift] = useState(null);
@@ -11,9 +13,9 @@ export default function ShiftHistory() {
         fetchHistory();
     }, []);
 
-    const fetchHistory = () => {
+    const fetchHistory = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts/my-history', {
+        const res = await fetch(`${API_BASE_URL}/shifts/my-history`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
@@ -24,9 +26,9 @@ export default function ShiftHistory() {
             .catch((err) => console.error(err));
     };
 
-    const handleRequestEdit = (requestData) => {
+    const handleRequestChange = async (requestData) => {
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/shifts/${requestData.id}/request-change`, {
+        const res = await fetch(`${API_BASE_URL}/shifts/${requestData.id}/request-change`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -62,7 +64,7 @@ export default function ShiftHistory() {
         return groups;
     }, {});
 
-    if (loading) return <p>Loading history...</p>;
+
 
     return (
         <div className="card" style={{ marginTop: '2rem' }}>
@@ -78,7 +80,13 @@ export default function ShiftHistory() {
                         </tr>
                     </thead>
                     <tbody>
-                        {Object.keys(groupedShifts).length === 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan="4">
+                                    <LoadingSpinner />
+                                </td>
+                            </tr>
+                        ) : Object.keys(groupedShifts).length === 0 ? (
                             <tr>
                                 <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                                     No history found.
@@ -195,3 +203,5 @@ function GroupedHistoryRow({ group, onRequestEdit }) {
         </>
     );
 }
+
+export default ShiftHistory;

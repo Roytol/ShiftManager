@@ -6,12 +6,14 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
         try {
             const user = await login(email, password);
             if (user.role === 'admin') {
@@ -21,6 +23,7 @@ export default function LoginPage() {
             }
         } catch (err) {
             setError(err.message);
+            setLoading(false);
         }
     };
 
@@ -45,6 +48,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            disabled={loading}
                         />
                     </div>
                     <div className="form-group">
@@ -55,10 +59,11 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            disabled={loading}
                         />
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                        Login
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
             </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import API_BASE_URL from '../config';
 
-export default function TaskSelectorModal({ isOpen, onClose, onConfirm }) {
+export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading: actionLoading }) {
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState('');
     const [notes, setNotes] = useState('');
@@ -9,7 +10,7 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm }) {
     useEffect(() => {
         if (isOpen) {
             const token = localStorage.getItem('token');
-            fetch('http://localhost:3001/api/tasks', {
+            fetch(`${API_BASE_URL}/tasks`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -48,6 +49,7 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm }) {
                                 value={selectedTask}
                                 onChange={(e) => setSelectedTask(e.target.value)}
                                 required
+                                disabled={actionLoading}
                             >
                                 <option value="">-- Select a Task --</option>
                                 {tasks.map((task) => (
@@ -65,15 +67,16 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm }) {
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows="3"
+                                disabled={actionLoading}
                             />
                         </div>
 
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>
+                            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={actionLoading}>
                                 Cancel
                             </button>
-                            <button type="submit" className="btn btn-primary" disabled={!selectedTask}>
-                                Clock In
+                            <button type="submit" className="btn btn-primary" disabled={!selectedTask || actionLoading}>
+                                {actionLoading ? 'Clocking In...' : 'Clock In'}
                             </button>
                         </div>
                     </form>

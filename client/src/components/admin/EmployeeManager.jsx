@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import API_BASE_URL from '../../config';
+import LoadingSpinner from '../LoadingSpinner';
 
-export default function EmployeeManager() {
+const EmployeeManager = () => {
     const [employees, setEmployees] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [currentEmployee, setCurrentEmployee] = useState(null);
@@ -15,22 +17,33 @@ export default function EmployeeManager() {
         birthdate: ''
     });
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchEmployees();
     }, []);
 
-    const fetchEmployees = () => {
+    const fetchEmployees = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/users', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setEmployees(data))
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/users`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message);
+            }
+            const data = await res.json();
+            setEmployees(data);
+        } catch (err) {
+            console.error(err);
+            setError(err.message);
+        }
     };
 
-    const handleSubmit = (e) => {
+
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
@@ -43,33 +56,37 @@ export default function EmployeeManager() {
             return;
         }
 
+        setLoading(true);
         const token = localStorage.getItem('token');
         const url = isEditing
-            ? `http://localhost:3001/api/users/${currentEmployee.id}`
-            : 'http://localhost:3001/api/users';
+            ? `${API_BASE_URL}/users/${currentEmployee.id}`
+            : `${API_BASE_URL}/users`;
         const method = isEditing ? 'PUT' : 'POST';
 
         // Remove confirmPassword before sending
         const { confirmPassword, ...payload } = formData;
 
-        fetch(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        })
-            .then(async (res) => {
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message);
-                }
-                fetchEmployees();
-                resetForm();
-                setIsModalOpen(false);
-            })
-            .catch((err) => setError(err.message));
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message);
+            }
+            fetchEmployees();
+            resetForm();
+            setIsModalOpen(false);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleEdit = (employee) => {
@@ -120,25 +137,31 @@ export default function EmployeeManager() {
         resetForm();
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
             return;
         }
+        if (!currentEmployee) return;
 
+        setLoading(true);
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/users/${currentEmployee.id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (res.ok) {
-                    fetchEmployees();
-                    handleCloseModal();
-                } else {
-                    res.json().then(data => setError(data.message));
-                }
-            })
-            .catch((err) => setError(err.message));
+        try {
+            const res = await fetch(`${API_BASE_URL}/users/${currentEmployee.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                fetchEmployees();
+                handleCloseModal();
+            } else {
+                const data = await res.json();
+                setError(data.message);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -184,6 +207,7 @@ export default function EmployeeManager() {
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         required
+                                        disabled={loading}
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -194,6 +218,7 @@ export default function EmployeeManager() {
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         required
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -205,6 +230,7 @@ export default function EmployeeManager() {
                                         className="form-input"
                                         value={formData.employee_code}
                                         onChange={(e) => setFormData({ ...formData, employee_code: e.target.value })}
+                                        disabled={loading}
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -214,6 +240,7 @@ export default function EmployeeManager() {
                                         className="form-input"
                                         value={formData.birthdate}
                                         onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -230,6 +257,7 @@ export default function EmployeeManager() {
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required={!isEditing}
+                                        disabled={loading}
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -240,6 +268,7 @@ export default function EmployeeManager() {
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                         required={!isEditing || formData.password.length > 0}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -251,6 +280,7 @@ export default function EmployeeManager() {
                                         className="form-input"
                                         value={formData.role}
                                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        disabled={loading}
                                     >
                                         <option value="employee">Employee</option>
                                         <option value="admin">Admin</option>
@@ -262,6 +292,7 @@ export default function EmployeeManager() {
                                         className="form-input"
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        disabled={loading}
                                     >
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
@@ -276,16 +307,17 @@ export default function EmployeeManager() {
                                         className="btn"
                                         style={{ color: 'var(--error-color)', paddingLeft: 0 }}
                                         onClick={handleDelete}
+                                        disabled={loading}
                                     >
-                                        Delete User
+                                        {loading ? 'Deleting...' : 'Delete User'}
                                     </button>
                                 )}
                                 <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
-                                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal} disabled={loading}>
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>
-                                        {isEditing ? 'Save Changes' : 'Create User'}
+                                    <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }} disabled={loading}>
+                                        {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create User')}
                                     </button>
                                 </div>
                             </div>
@@ -306,7 +338,13 @@ export default function EmployeeManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {employees.length === 0 ? (
+                            {loading && employees.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3">
+                                        <LoadingSpinner />
+                                    </td>
+                                </tr>
+                            ) : employees.length === 0 ? (
                                 <tr>
                                     <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                                         No employees found.
@@ -331,6 +369,7 @@ export default function EmployeeManager() {
                                                 className="btn btn-secondary btn-icon"
                                                 onClick={() => handleEditClick(emp)}
                                                 title="Edit"
+                                                disabled={loading}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
@@ -338,25 +377,31 @@ export default function EmployeeManager() {
                                             </button>
                                             <button
                                                 className="btn btn-danger btn-icon"
-                                                onClick={() => {
-                                                    setCurrentEmployee(emp);
+                                                onClick={async () => {
                                                     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                                                        setLoading(true);
                                                         const token = localStorage.getItem('token');
-                                                        fetch(`http://localhost:3001/api/users/${emp.id}`, {
-                                                            method: 'DELETE',
-                                                            headers: { Authorization: `Bearer ${token}` },
-                                                        })
-                                                            .then((res) => {
-                                                                if (res.ok) {
-                                                                    fetchEmployees();
-                                                                } else {
-                                                                    res.json().then(data => alert(data.message));
-                                                                }
-                                                            })
-                                                            .catch((err) => alert(err.message));
+                                                        try {
+                                                            const res = await fetch(`${API_BASE_URL}/users/${emp.id}`, {
+                                                                method: 'DELETE',
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+                                                            const data = await res.json();
+                                                            if (res.ok) {
+                                                                setEmployees(employees.filter(e => e.id !== emp.id));
+                                                            } else {
+                                                                alert(data.message);
+                                                            }
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                            alert('Failed to delete user');
+                                                        } finally {
+                                                            setLoading(false);
+                                                        }
                                                     }
                                                 }}
                                                 title="Delete"
+                                                disabled={loading}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
@@ -371,6 +416,8 @@ export default function EmployeeManager() {
                     </table>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
+
+export default EmployeeManager;

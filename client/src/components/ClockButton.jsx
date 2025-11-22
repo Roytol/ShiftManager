@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function ClockButton({ currentShift, onClockIn, onClockOut }) {
+export default function ClockButton({ currentShift, onClockIn, onClockOut, disabled }) {
     const isClockedIn = !!currentShift;
     const [elapsedTime, setElapsedTime] = useState('00:00:00');
 
@@ -60,8 +60,9 @@ export default function ClockButton({ currentShift, onClockIn, onClockOut }) {
                     <button
                         onClick={onClockOut}
                         className="btn btn-clock-large btn-clock-out"
+                        disabled={disabled}
                     >
-                        Clock Out
+                        {disabled ? 'Clocking Out...' : 'Clock Out'}
                     </button>
                 </>
             ) : (
@@ -72,6 +73,7 @@ export default function ClockButton({ currentShift, onClockIn, onClockOut }) {
                     <button
                         onClick={onClockIn}
                         className="btn btn-clock-large btn-clock-in"
+                        disabled={disabled}
                     >
                         Clock In
                     </button>

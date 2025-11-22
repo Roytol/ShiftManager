@@ -27,15 +27,23 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
             status: shift.status
         });
 
-        const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/tasks', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setTasks(data));
+        const fetchTasks = async () => {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE_URL}/tasks`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                setTasks(data);
+            } catch (error) {
+                console.error("Failed to fetch tasks:", error);
+            }
+        };
+
+        fetchTasks();
     }, [shift]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
 
@@ -46,7 +54,7 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
             end_time: formData.end_time ? new Date(formData.end_time).toISOString() : null
         };
 
-        fetch(`http://localhost:3001/api/shifts/${shift.id}`, {
+        fetch(`${API_BASE_URL}/shifts/${shift.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

@@ -5,84 +5,78 @@ const { authenticateToken, isAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 // Get All Change Requests
-router.get('/change-requests', authenticateToken, isAdmin, (req, res) => {
-    db.all(
-        `SELECT r.*, u.name as user_name, s.start_time as original_start_time, s.end_time as original_end_time, t.name as task_name
-         FROM shift_change_requests r
-         JOIN users u ON r.user_id = u.id
-         JOIN shifts s ON r.shift_id = s.id
-         JOIN tasks t ON s.task_id = t.id
-         WHERE r.status = 'pending'
-         ORDER BY r.created_at DESC`,
-        [],
-        (err, rows) => {
-            if (err) return res.status(500).json({ message: 'Database error' });
-            res.json(rows);
-        }
-    );
+router.get('/change-requests', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT r.*, u.name as user_name, s.start_time as original_start_time, s.end_time as original_end_time, t.name as task_name
+             FROM shift_change_requests r
+             JOIN users u ON r.user_id = u.id
+             JOIN shifts s ON r.shift_id = s.id
+             JOIN tasks t ON s.task_id = t.id
+             WHERE r.status = 'pending'
+             ORDER BY r.created_at DESC`
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Database error' });
+    }
 });
 
 // Approve Change Request
-router.post('/change-requests/:id/approve', authenticateToken, isAdmin, (req, res) => {
+router.post('/change-requests/:id/approve', authenticateToken, isAdmin, async (req, res) => {
     const { id } = req.params;
+    const client = await db.pool.connect();
 
-    db.get('SELECT * FROM shift_change_requests WHERE id = ?', [id], (err, request) => {
-        if (err) return res.status(500).json({ message: 'Database error' });
-        if (!request) return res.status(404).json({ message: 'Request not found' });
+    try {
+        const requestResult = await client.query('SELECT * FROM shift_change_requests WHERE id = $1', [id]);
+        const request = requestResult.rows[0];
 
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION');
+        if (!request) {
+            client.release();
+            return res.status(404).json({ message: 'Request not found' });
+        }
 
-            // Update Shift
-            db.run(
-                'UPDATE shifts SET start_time = ?, end_time = ?, status = ? WHERE id = ?',
-                [request.new_start_time, request.new_end_time, 'edited', request.shift_id],
-                function (err) {
-                    if (err) {
-                        console.error('Error updating shift:', err);
-                        db.run('ROLLBACK');
-                        return res.status(500).json({ message: 'Failed to update shift' });
-                    }
+        await client.query('BEGIN');
 
-                    // Update Request Status
-                    db.run(
-                        'UPDATE shift_change_requests SET status = ? WHERE id = ?',
-                        ['approved', id],
-                        function (err) {
-                            if (err) {
-                                console.error('Error updating request status:', err);
-                                db.run('ROLLBACK');
-                                return res.status(500).json({ message: 'Failed to update request status' });
-                            }
+        // Update Shift
+        await client.query(
+            'UPDATE shifts SET start_time = $1, end_time = $2, status = $3 WHERE id = $4',
+            [request.new_start_time, request.new_end_time, 'edited', request.shift_id]
+        );
 
-                            db.run('COMMIT', (err) => {
-                                if (err) {
-                                    console.error('Error committing transaction:', err);
-                                    return res.status(500).json({ message: 'Transaction commit failed' });
-                                }
-                                res.json({ message: 'Request approved and shift updated' });
-                            });
-                        }
-                    );
-                }
-            );
-        });
-    });
+        // Update Request Status
+        await client.query(
+            'UPDATE shift_change_requests SET status = $1 WHERE id = $2',
+            ['approved', id]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Request approved and shift updated' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Transaction error:', err);
+        res.status(500).json({ message: 'Failed to approve request' });
+    } finally {
+        client.release();
+    }
 });
 
 // Reject Change Request
-router.post('/change-requests/:id/reject', authenticateToken, isAdmin, (req, res) => {
+router.post('/change-requests/:id/reject', authenticateToken, isAdmin, async (req, res) => {
     const { id } = req.params;
 
-    db.run(
-        'UPDATE shift_change_requests SET status = ? WHERE id = ?',
-        ['rejected', id],
-        function (err) {
-            if (err) return res.status(500).json({ message: 'Database error' });
-            if (this.changes === 0) return res.status(404).json({ message: 'Request not found' });
-            res.json({ message: 'Request rejected' });
-        }
-    );
+    try {
+        const result = await db.query(
+            'UPDATE shift_change_requests SET status = $1 WHERE id = $2',
+            ['rejected', id]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ message: 'Request not found' });
+        res.json({ message: 'Request rejected' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Database error' });
+    }
 });
 
 module.exports = router;

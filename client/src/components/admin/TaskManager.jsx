@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import TaskEditModal from './TaskEditModal';
+import API_BASE_URL from '../../config';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function TaskManager() {
     const [tasks, setTasks] = useState([]);
@@ -7,61 +9,71 @@ export default function TaskManager() {
     const [editingTask, setEditingTask] = useState(null);
     const [showCreateTask, setShowCreateTask] = useState(false);
 
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         fetchTasks();
     }, []);
 
-    const fetchTasks = () => {
+    const fetchTasks = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/tasks', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setTasks(data))
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setTasks(data);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const handleCreateTask = (e) => {
+    const handleCreateTask = async (e) => {
         e.preventDefault();
+        setLoading(true);
         const token = localStorage.getItem('token');
 
-        fetch('http://localhost:3001/api/tasks', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(newTask),
-        })
-            .then((res) => {
-                if (res.ok) {
-                    setNewTask({ name: '' });
-                    fetchTasks();
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(newTask),
+            });
+            if (res.ok) {
+                setNewTask({ name: '' });
+                fetchTasks();
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleUpdateTask = (updatedTask) => {
+    const handleUpdateTask = async (updatedTask) => {
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/tasks/${updatedTask.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(updatedTask),
-        })
-            .then((res) => {
-                if (res.ok) {
-                    fetchTasks();
-                    setEditingTask(null);
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks/${updatedTask.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(updatedTask),
+            });
+            if (res.ok) {
+                fetchTasks();
+                setEditingTask(null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const toggleTaskStatus = (task) => {
+    const toggleTaskStatus = async (task) => {
         const newStatus = task.status === 'active' ? 'inactive' : 'active';
         const action = newStatus === 'active' ? 'activate' : 'deactivate';
 
@@ -69,44 +81,49 @@ export default function TaskManager() {
             return;
         }
 
+        setLoading(true);
         const token = localStorage.getItem('token');
 
-        fetch(`http://localhost:3001/api/tasks/${task.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ ...task, status: newStatus }),
-        })
-            .then((res) => {
-                if (res.ok) fetchTasks();
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks/${task.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ ...task, status: newStatus }),
+            });
+            if (res.ok) fetchTasks();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const deleteTask = (task) => {
+    const deleteTask = async (task) => {
         if (!window.confirm(`Are you sure you want to delete the task "${task.name}"?`)) {
             return;
         }
 
+        setLoading(true);
         const token = localStorage.getItem('token');
-
-        fetch(`http://localhost:3001/api/tasks/${task.id}`, {
-            method: 'DELETE',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-            .then(async (res) => {
-                if (res.ok) {
-                    fetchTasks();
-                } else {
-                    const data = await res.json();
-                    alert(data.message || 'Failed to delete task');
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks/${task.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                fetchTasks();
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Failed to delete task');
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -138,8 +155,11 @@ export default function TaskManager() {
                             value={newTask.name}
                             onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
                             required
+                            disabled={loading}
                         />
-                        <button type="submit" className="btn btn-primary">Add Task</button>
+                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                            {loading ? 'Adding...' : 'Add Task'}
+                        </button>
                     </form>
                 </div>
             </div>
@@ -156,7 +176,13 @@ export default function TaskManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {tasks.length === 0 ? (
+                            {loading && tasks.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3">
+                                        <LoadingSpinner />
+                                    </td>
+                                </tr>
+                            ) : tasks.length === 0 ? (
                                 <tr>
                                     <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                                         No tasks found. Create one to get started!
@@ -176,6 +202,7 @@ export default function TaskManager() {
                                                 <button
                                                     onClick={() => toggleTaskStatus(task)}
                                                     className={`btn btn-sm ${task.status === 'active' ? 'btn-secondary' : 'btn-success'}`}
+                                                    disabled={loading}
                                                 >
                                                     {task.status === 'active' ? 'Deactivate' : 'Activate'}
                                                 </button>
@@ -183,6 +210,7 @@ export default function TaskManager() {
                                                     onClick={() => setEditingTask(task)}
                                                     className="btn btn-secondary btn-icon"
                                                     title="Edit Task"
+                                                    disabled={loading}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -193,6 +221,7 @@ export default function TaskManager() {
                                                     onClick={() => deleteTask(task)}
                                                     className="btn btn-danger btn-icon"
                                                     title="Delete Task"
+                                                    disabled={loading}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <polyline points="3 6 5 6 21 6"></polyline>

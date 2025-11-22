@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import ShiftEditModal from './ShiftEditModal';
 import ShiftCreateModal from './ShiftCreateModal';
 import { formatDate, formatTime, formatDuration } from '../../utils/formatters';
+import LoadingSpinner from '../LoadingSpinner';
+import API_BASE_URL from '../../config';
 
 export default function ShiftManager() {
     const [shifts, setShifts] = useState([]);
     const [filteredShifts, setFilteredShifts] = useState([]);
     const [groupedShifts, setGroupedShifts] = useState({});
-    const [employees, setEmployees] = useState([]);
+    const [users, setUsers] = useState([]); // Renamed from employees
     const [filters, setFilters] = useState({
-        employeeId: '',
-        month: new Date().getMonth(),
-        year: new Date().getFullYear()
+        user_id: '', // Renamed from employeeId
+        start_date: '', // New filter
+        end_date: '' // New filter
     });
     const [editingShift, setEditingShift] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -19,46 +21,54 @@ export default function ShiftManager() {
 
     const [sortOption, setSortOption] = useState('date_desc'); // Default: Newest First
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         fetchShifts();
-        fetchEmployees();
+        fetchUsers(); // Renamed from fetchEmployees
     }, []);
 
     useEffect(() => {
         applyFilters();
     }, [shifts, filters, sortOption]);
 
-    const handleDeleteShift = (id) => {
+    const handleDeleteShift = async (id) => {
         if (!window.confirm('Are you sure you want to delete this shift?')) return;
 
-        const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/shifts/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (res.ok) {
-                    fetchShifts();
-                } else {
-                    alert('Failed to delete shift');
-                }
-            })
-            .catch((err) => console.error(err));
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/shifts/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.ok) {
+                fetchShifts();
+            } else {
+                alert('Failed to delete shift');
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error(err);
+            setLoading(false);
+        }
     };
 
     const applyFilters = () => {
         let result = shifts;
-        if (filters.employeeId) {
-            result = result.filter(s => s.user_id === parseInt(filters.employeeId));
+        if (filters.user_id) { // Changed from employeeId
+            result = result.filter(s => s.user_id === parseInt(filters.user_id)); // Changed from employeeId
         }
 
-        const startOfMonth = new Date(filters.year, filters.month, 1);
-        const endOfMonth = new Date(filters.year, parseInt(filters.month) + 1, 0, 23, 59, 59, 999);
+        // Date filtering is now handled by the API, so this client-side filtering is removed
+        // const startOfMonth = new Date(filters.year, filters.month, 1);
+        // const endOfMonth = new Date(filters.year, parseInt(filters.month) + 1, 0, 23, 59, 59, 999);
 
-        result = result.filter(s => {
-            const shiftDate = new Date(s.start_time);
-            return shiftDate >= startOfMonth && shiftDate <= endOfMonth;
-        });
+        // result = result.filter(s => {
+        //     const shiftDate = new Date(s.start_time);
+        //     return shiftDate >= startOfMonth && shiftDate <= endOfMonth;
+        // });
 
         // Sorting Logic
         result.sort((a, b) => {
@@ -113,48 +123,50 @@ export default function ShiftManager() {
         setGroupedShifts(groups);
     };
 
-    const fetchShifts = () => {
+    const fetchShifts = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error('Failed to fetch shifts');
-                }
-                return res.json();
-            })
-            .then((data) => {
-                if (Array.isArray(data)) {
-                    setShifts(data);
-                } else {
-                    console.error('Received invalid data format for shifts:', data);
-                    setShifts([]);
-                }
-            })
-            .catch((err) => {
-                console.error(err);
-                setShifts([]);
+        const queryParams = new URLSearchParams(filters).toString(); // Use filters for query params
+        try {
+            const res = await fetch(`${API_BASE_URL}/shifts?${queryParams}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
+
+            if (!res.ok) {
+                throw new Error('Failed to fetch shifts');
+            }
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setShifts(data);
+            } else {
+                console.error('Received invalid data format for shifts:', data);
+                setShifts([]);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const fetchEmployees = () => {
+    const fetchUsers = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/users', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error('Failed to fetch employees');
-                return res.json();
-            })
-            .then((data) => {
-                if (Array.isArray(data)) {
-                    setEmployees(data);
-                } else {
-                    setEmployees([]);
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/users`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) {
+                throw new Error('Failed to fetch users');
+            }
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setUsers(data);
+            } else {
+                setUsers([]);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (
@@ -210,7 +222,7 @@ export default function ShiftManager() {
                                 onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}
                             >
                                 <option value="">All Employees</option>
-                                {employees.map(emp => (
+                                {users.map(emp => (
                                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                                 ))}
                             </select>
@@ -253,7 +265,13 @@ export default function ShiftManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.keys(groupedShifts).length === 0 ? (
+                            {loading && Object.keys(groupedShifts).length === 0 ? (
+                                <tr>
+                                    <td colSpan="5">
+                                        <LoadingSpinner />
+                                    </td>
+                                </tr>
+                            ) : Object.keys(groupedShifts).length === 0 ? (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                                         No shifts found matching your filters.

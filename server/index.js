@@ -8,7 +8,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Request logging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    next();
+});
+
+// CORS middleware
+app.use(cors({
+    origin: true, // Reflects the request origin, allowing all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 const authRoutes = require('./routes/auth');

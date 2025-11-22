@@ -4,11 +4,13 @@ import ClockButton from '../components/ClockButton';
 import TaskSelectorModal from '../components/TaskSelectorModal';
 import ShiftHistory from '../components/ShiftHistory';
 import Clock from '../components/Clock';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 import UserDropdown from '../components/UserDropdown';
+import API_BASE_URL from '../config';
 
 export default function EmployeeDashboard() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [currentShift, setCurrentShift] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -18,55 +20,63 @@ export default function EmployeeDashboard() {
         fetchStatus();
     }, []);
 
-    const fetchStatus = () => {
+    const fetchStatus = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts/status', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setCurrentShift(data);
-                setLoading(false);
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/my-shifts/status`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setCurrentShift(data);
+            setLoading(false);
+        } catch (err) {
+            console.error(err);
+            setLoading(false);
+        }
     };
 
-    const handleClockIn = (taskId, notes) => {
+    const handleClockIn = async (taskId) => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts/clock-in', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ task_id: taskId, notes }),
-        })
-            .then((res) => {
-                if (res.ok) {
-                    setIsModalOpen(false);
-                    fetchStatus();
-                    setRefreshHistory(prev => prev + 1);
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-in`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ task_id: taskId })
+            });
+            if (res.ok) {
+                await fetchStatus();
+                setIsModalOpen(false);
+                setRefreshHistory(prev => prev + 1);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const handleClockOut = () => {
+    const handleClockOut = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts/clock-out', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (res.ok) {
-                    setCurrentShift(null);
-                    setRefreshHistory(prev => prev + 1);
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-out`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                await fetchStatus();
+                setRefreshHistory(prev => prev + 1);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    if (loading) return <div className="container">Loading...</div>;
+    if (loading) return (
+        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <LoadingSpinner />
+        </div>
+    );
 
     return (
         <div className="container">

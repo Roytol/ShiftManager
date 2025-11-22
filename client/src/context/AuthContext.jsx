@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
+import API_BASE_URL from '../config';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            fetch('http://localhost:3001/api/auth/me', {
+            fetch(`${API_BASE_URL}/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => {
@@ -25,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const res = await fetch('http://localhost:3001/api/auth/login', {
+        const res = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),

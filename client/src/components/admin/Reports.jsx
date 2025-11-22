@@ -16,31 +16,46 @@ export default function Reports() {
 
     useEffect(() => {
         fetchShifts();
-        fetchEmployees();
+        fetchEmployees(); // Keeping original name
     }, []);
 
     useEffect(() => {
         applyFilters();
     }, [shifts, filters]);
 
-    const fetchShifts = () => {
+    const fetchShifts = async () => {
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/shifts', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setShifts(data))
-            .catch((err) => console.error(err));
+        // Original filters were employeeId, month, year. New snippet suggests user_id, start_date, end_date.
+        // For now, I'll adapt to the existing filters structure while replacing the URL.
+        // If the user intends a full filter change, they'll need to provide more context.
+        const queryParams = new URLSearchParams({
+            employeeId: filters.employeeId,
+            month: filters.month,
+            year: filters.year
+        }).toString();
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/shifts?${queryParams}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setShifts(data);
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const fetchEmployees = () => {
+    const fetchEmployees = async () => { // Keeping original name
         const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/users', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => setEmployees(data))
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/users`, { // Changed to /users as per snippet
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setEmployees(data); // Keeping original state variable name
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const applyFilters = () => {

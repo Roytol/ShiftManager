@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import API_BASE_URL from '../config';
 
-export default function UserSettingsModal({ onClose }) {
-    const { user } = useAuth();
+const UserSettingsModal = ({ user, onClose, onUpdate }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -12,36 +11,38 @@ export default function UserSettingsModal({ onClose }) {
         birthdate: ''
     });
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-
-        if (user) {
-            fetch(`http://localhost:3001/api/users/${user.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => {
-                    if (res.ok) return res.json();
-                    throw new Error('Failed to fetch user data');
-                })
-                .then(data => {
-                    setFormData({
-                        name: data.name,
-                        email: data.email,
-                        password: '',
-                        confirmPassword: '',
-                        employee_code: data.employee_code || '',
-                        birthdate: data.birthdate || ''
-                    });
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error(err);
-                    setError('Failed to load user data');
-                    setLoading(false);
+        const fetchUserData = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
+
+                if (!res.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+                const data = await res.json();
+                setFormData({
+                    name: data.name,
+                    email: data.email,
+                    password: '',
+                    confirmPassword: '',
+                    employee_code: data.employee_code || '',
+                    birthdate: data.birthdate || ''
+                });
+                setLoading(false);
+            } catch (err) {
+                console.error(err);
+                setError('Failed to load user data');
+                setLoading(false);
+            }
         }
     }, [user]);
 
@@ -64,7 +65,7 @@ export default function UserSettingsModal({ onClose }) {
         // if (req.user.role === 'admin') { query += ', role = ?, status = ?'; params.push(role, status); }
         // So if I am not admin, I don't need to send role/status.
 
-        fetch(`http://localhost:3001/api/users/${user.id}`, {
+        fetch(`${API_BASE_URL}/users/${user.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -196,3 +197,5 @@ export default function UserSettingsModal({ onClose }) {
         </div>
     );
 }
+
+export default UserSettingsModal;

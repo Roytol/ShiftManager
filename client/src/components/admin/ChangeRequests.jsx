@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatTime } from '../../utils/formatters';
+import API_BASE_URL from '../../config';
 
 export default function ChangeRequests() {
     const [requests, setRequests] = useState([]);
@@ -9,41 +10,43 @@ export default function ChangeRequests() {
         fetchRequests();
     }, []);
 
-    const fetchRequests = () => {
-        const token = localStorage.getItem('token');
-        fetch('http://localhost:3001/api/admin/change-requests', {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setRequests(data);
-                setLoading(false);
-            })
-            .catch((err) => console.error(err));
+    const fetchRequests = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/admin/change-requests`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setRequests(data);
+            setLoading(false);
+        } catch (err) {
+            console.error(err);
+            setLoading(false); // Ensure loading state is reset even on error
+        }
     };
 
-    const handleApprove = (id) => {
+    const handleApprove = async (id) => {
         if (!window.confirm('Are you sure you want to approve this change?')) return;
-
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/admin/change-requests/${id}/approve`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => {
-                if (res.ok) {
-                    alert('Request approved!');
-                    fetchRequests();
-                }
-            })
-            .catch((err) => console.error(err));
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/change-requests/${id}/approve`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Request approved.');
+                fetchRequests();
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleReject = (id) => {
         if (!window.confirm('Are you sure you want to reject this request?')) return;
 
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:3001/api/admin/change-requests/${id}/reject`, {
+        fetch(`${API_BASE_URL}/admin/change-requests/${id}/reject`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
         })

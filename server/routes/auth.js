@@ -7,22 +7,23 @@ const router = express.Router();
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // Login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error' });
-        }
+    try {
+        const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        const user = result.rows[0];
+
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         if (user.status !== 'active') {
+            console.log(`[Auth] Login failed: User ${email} is inactive`);
             return res.status(403).json({ message: 'Account is inactive' });
         }
 
@@ -37,7 +38,10 @@ router.post('/login', (req, res) => {
         const { password: _, ...userWithoutPassword } = user;
 
         res.json({ token, user: userWithoutPassword });
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Database error' });
+    }
 });
 
 // Get Current User (Me)
@@ -48,20 +52,23 @@ router.get('/me', (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    jwt.verify(token, SECRET_KEY, async (err, decoded) => {
         if (err) {
             return res.status(401).json({ message: 'Invalid token' });
         }
 
-        db.get('SELECT id, name, email, role, status FROM users WHERE id = ?', [decoded.id], (err, user) => {
-            if (err) {
-                return res.status(500).json({ message: 'Database error' });
-            }
+        try {
+            const result = await db.query('SELECT id, name, email, role, status FROM users WHERE id = $1', [decoded.id]);
+            const user = result.rows[0];
+
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
             }
             res.json(user);
-        });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Database error' });
+        }
     });
 });
 

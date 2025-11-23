@@ -135,7 +135,7 @@ export default function UserDropdown() {
                 )}
             </div>
 
-            {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
+            {showSettings && <UserSettingsModal user={user} onClose={() => setShowSettings(false)} />}
         </>
     );
 }

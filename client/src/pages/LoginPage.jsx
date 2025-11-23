@@ -35,7 +35,6 @@ export default function LoginPage() {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            minHeight: '100vh',
             background: 'var(--background-color)'
         }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px' }}>

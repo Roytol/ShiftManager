@@ -111,13 +111,23 @@ textarea {
 /* Card Styling - Glassmorphism-ready */
 /* Card Styling - Glassmorphism-ready */
 .card {
-  background-color: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 2rem;
   border: var(--glass-border);
+  z-index: 0;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-lg);
+  z-index: -1;
 }
 
 /* Typography */

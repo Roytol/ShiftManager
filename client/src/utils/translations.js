@@ -153,6 +153,7 @@ export const translations = {
         clock_out_success: "Clocked out successfully",
         failed_clock_in: "Failed to clock in",
         failed_clock_out: "Failed to clock out",
+        load_more: "Load More",
 
         // Navigation
         my_shift: "My Shift",
@@ -372,6 +373,7 @@ export const translations = {
         clock_out_success: "יצאת בהצלחה",
         failed_clock_in: "נכשל בכניסה",
         failed_clock_out: "נכשל ביציאה",
+        load_more: "טען עוד",
 
         // Navigation
         my_shift: "המשמרת שלי",

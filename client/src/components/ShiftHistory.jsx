@@ -14,25 +14,55 @@ const ShiftHistory = () => {
     const { t } = useLanguage();
     const { showToast } = useToast();
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     useEffect(() => {
-        fetchHistory();
+        fetchHistory(1, true);
     }, []);
 
-    const fetchHistory = async () => {
-        setLoading(true);
+    const fetchHistory = async (currentPage = 1, isReset = false) => {
+        if (currentPage === 1) setLoading(true);
+        else setIsLoadingMore(true);
+
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE_URL}/shifts/my-history`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setShifts(data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.error(err);
-                setLoading(false);
+        const limit = 20;
+        const offset = (currentPage - 1) * limit;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/shifts/my-history?page=${currentPage}&limit=${limit}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
+            const responseData = await res.json();
+
+            // Handle both old array format and new pagination format for safety
+            const newShifts = Array.isArray(responseData) ? responseData : (responseData.data || []);
+            const pagination = responseData.pagination;
+
+            if (isReset) {
+                setShifts(newShifts);
+            } else {
+                setShifts(prev => [...prev, ...newShifts]);
+            }
+
+            if (pagination) {
+                setHasMore(pagination.page < pagination.totalPages);
+            } else {
+                setHasMore(false); // Fallback if API doesn't return pagination info
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+            setIsLoadingMore(false);
+        }
+    };
+
+    const handleLoadMore = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchHistory(nextPage, false);
     };
 
     const handleRequestChange = async (requestData) => {
@@ -122,6 +152,18 @@ const ShiftHistory = () => {
                     onRequest={handleRequestChange}
                 />
             )}
+
+            {hasMore && (
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                    >
+                        {isLoadingMore ? <LoadingSpinner size="small" /> : t('load_more')}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -140,7 +182,7 @@ function GroupedHistoryRow({ group, onRequestEdit, t }) {
                 onClick={() => setExpanded(!expanded)}
             >
                 <td data-label={t('date')} style={{ padding: '1rem 0.5rem', fontWeight: '600' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start' }}>
                         <span style={{
                             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
                             transition: 'transform 0.2s'

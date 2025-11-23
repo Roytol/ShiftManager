@@ -69,6 +69,9 @@ router.post('/clock-out', authenticateToken, async (req, res) => {
 // Get My History (Employee)
 router.get('/my-history', authenticateToken, async (req, res) => {
     const user_id = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
 
     try {
         const result = await db.query(
@@ -79,10 +82,26 @@ router.get('/my-history', authenticateToken, async (req, res) => {
          JOIN tasks t ON s.task_id = t.id 
          LEFT JOIN shift_change_requests r ON s.id = r.shift_id AND r.status = 'pending'
          WHERE s.user_id = $1 
-         ORDER BY s.start_time DESC`,
+         ORDER BY s.start_time DESC
+         LIMIT $2 OFFSET $3`,
+            [user_id, limit, offset]
+        );
+
+        const countResult = await db.query(
+            'SELECT COUNT(*) FROM shifts WHERE user_id = $1',
             [user_id]
         );
-        res.json(result.rows);
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Database error' });
@@ -111,7 +130,8 @@ router.get('/status', authenticateToken, async (req, res) => {
 
 // Get All Shifts (Admin)
 router.get('/', authenticateToken, isAdmin, async (req, res) => {
-    const { user_id, start_date, end_date } = req.query;
+    const { user_id, start_date, end_date, sort_by = 'start_time', order = 'DESC', page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
 
     let query = `
     SELECT s.*, u.name as user_name, t.name as task_name,
@@ -121,30 +141,64 @@ router.get('/', authenticateToken, isAdmin, async (req, res) => {
     JOIN tasks t ON s.task_id = t.id
     WHERE 1=1
   `;
+    let countQuery = `
+    SELECT COUNT(*) 
+    FROM shifts s 
+    WHERE 1=1
+    `;
+
     let params = [];
     let paramCount = 0;
 
     if (user_id) {
         paramCount++;
         query += ` AND s.user_id = $${paramCount}`;
+        countQuery += ` AND s.user_id = $${paramCount}`;
         params.push(user_id);
     }
     if (start_date) {
         paramCount++;
         query += ` AND s.start_time >= $${paramCount}`;
+        countQuery += ` AND s.start_time >= $${paramCount}`;
         params.push(start_date);
     }
     if (end_date) {
         paramCount++;
         query += ` AND s.start_time <= $${paramCount}`;
+        countQuery += ` AND s.start_time <= $${paramCount}`;
         params.push(end_date);
     }
 
-    query += ' ORDER BY s.start_time DESC';
+    // Sorting
+    const validSortColumns = ['start_time', 'user_name', 'total_hours']; // Add more as needed
+    const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'start_time';
+    const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    // For joined columns, we need to be careful. 
+    // user_name is u.name, total_hours is calculated.
+    // Ideally, we handle this mapping.
+    let orderByClause = 's.start_time DESC'; // Default
+
+    if (sort_by === 'user_name') orderByClause = `u.name ${sortOrder}`;
+    else if (sort_by === 'total_hours') orderByClause = `total_hours ${sortOrder}`; // PostgreSQL allows alias in ORDER BY
+    else orderByClause = `s.${sortColumn} ${sortOrder}`;
+
+    query += ` ORDER BY ${orderByClause} LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
 
     try {
-        const result = await db.query(query, params);
-        res.json(result.rows);
+        const result = await db.query(query, [...params, limit, offset]);
+        const countResult = await db.query(countQuery, params);
+        const total = parseInt(countResult.rows[0].count);
+
+        res.json({
+            data: result.rows,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Database error' });

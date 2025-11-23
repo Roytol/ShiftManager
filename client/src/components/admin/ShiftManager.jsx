@@ -27,16 +27,77 @@ export default function ShiftManager() {
     const [loading, setLoading] = useState(true);
     const { t } = useLanguage();
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     useEffect(() => {
-        fetchShifts();
-        fetchUsers(); // Renamed from fetchEmployees
+        setPage(1);
+        setShifts([]);
+        setHasMore(true);
+        fetchShifts(1, true);
+    }, [filters, sortOption]);
+
+    const fetchShifts = async (currentPage = 1, isReset = false) => {
+        if (currentPage === 1) setLoading(true);
+        else setIsLoadingMore(true);
+
+        const token = localStorage.getItem('token');
+
+        // Map sortOption to API params
+        let sort_by = 'start_time';
+        let order = 'DESC';
+
+        if (sortOption === 'date_asc') { order = 'ASC'; }
+        else if (sortOption === 'name_asc') { sort_by = 'user_name'; order = 'ASC'; }
+        else if (sortOption === 'name_desc') { sort_by = 'user_name'; order = 'DESC'; }
+        else if (sortOption === 'duration_desc') { sort_by = 'total_hours'; order = 'DESC'; }
+        else if (sortOption === 'duration_asc') { sort_by = 'total_hours'; order = 'ASC'; }
+
+        const queryParams = new URLSearchParams({
+            ...filters,
+            page: currentPage,
+            limit: 20,
+            sort_by,
+            order
+        }).toString();
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/shifts?${queryParams}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to fetch shifts');
+            }
+            const responseData = await res.json();
+            const newShifts = responseData.data || [];
+            const pagination = responseData.pagination;
+
+            if (isReset) {
+                setShifts(newShifts);
+            } else {
+                setShifts(prev => [...prev, ...newShifts]);
+            }
+
+            setHasMore(pagination.page < pagination.totalPages);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+            setIsLoadingMore(false);
+        }
+    };
+
+    const handleLoadMore = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchShifts(nextPage, false);
+    };
+
+    useEffect(() => {
+        fetchUsers();
     }, []);
-
-    useEffect(() => {
-        applyFilters();
-    }, [shifts, filters, sortOption]);
-
-    const { showToast } = useToast();
 
     const handleDeleteShift = async (id) => {
         if (!window.confirm(t('confirm_delete_shift'))) return;
@@ -51,7 +112,9 @@ export default function ShiftManager() {
 
             if (res.ok) {
                 showToast(t('shift_deleted_success'), 'success');
-                fetchShifts();
+                // Refresh current page logic could be complex, for now just reset to page 1
+                setPage(1);
+                fetchShifts(1, true);
             } else {
                 showToast(t('shift_delete_fail'), 'error');
                 setLoading(false);
@@ -59,100 +122,6 @@ export default function ShiftManager() {
         } catch (err) {
             console.error(err);
             showToast(t('error_occurred'), 'error');
-            setLoading(false);
-        }
-    };
-
-    const applyFilters = () => {
-        let result = shifts;
-        if (filters.user_id) { // Changed from employeeId
-            result = result.filter(s => s.user_id === parseInt(filters.user_id)); // Changed from employeeId
-        }
-
-        // Date filtering is now handled by the API, so this client-side filtering is removed
-        // const startOfMonth = new Date(filters.year, filters.month, 1);
-        // const endOfMonth = new Date(filters.year, parseInt(filters.month) + 1, 0, 23, 59, 59, 999);
-
-        // result = result.filter(s => {
-        //     const shiftDate = new Date(s.start_time);
-        //     return shiftDate >= startOfMonth && shiftDate <= endOfMonth;
-        // });
-
-        // Sorting Logic
-        result.sort((a, b) => {
-            const nameA = a.user_name || '';
-            const nameB = b.user_name || '';
-            const durationA = parseFloat(a.total_hours) || 0;
-            const durationB = parseFloat(b.total_hours) || 0;
-            const dateA = new Date(a.start_time || 0);
-            const dateB = new Date(b.start_time || 0);
-
-            switch (sortOption) {
-                case 'date_desc':
-                    return dateB - dateA;
-                case 'date_asc':
-                    return dateA - dateB;
-                case 'name_asc':
-                    return nameA.localeCompare(nameB);
-                case 'name_desc':
-                    return nameB.localeCompare(nameA);
-                case 'duration_desc':
-                    return durationB - durationA;
-                case 'duration_asc':
-                    return durationA - durationB;
-                default:
-                    return dateB - dateA;
-            }
-        });
-
-        // Grouping Logic
-        const groups = {};
-        result.forEach(shift => {
-            const shiftDate = new Date(shift.start_time);
-            const date = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
-            const key = `${date}_${shift.user_id}`;
-
-            if (!groups[key]) {
-                groups[key] = {
-                    id: key,
-                    date: shift.start_time,
-                    user_id: shift.user_id,
-                    user_name: shift.user_name,
-                    shifts: [],
-                    total_hours: 0
-                };
-            }
-
-            groups[key].shifts.push(shift);
-            groups[key].total_hours += parseFloat(shift.total_hours || 0);
-        });
-
-        setFilteredShifts(result); // Keep flat list for other uses if needed, but we use groupedShifts for render
-        setGroupedShifts(groups);
-    };
-
-    const fetchShifts = async () => {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        const queryParams = new URLSearchParams(filters).toString(); // Use filters for query params
-        try {
-            const res = await fetch(`${API_BASE_URL}/shifts?${queryParams}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!res.ok) {
-                throw new Error('Failed to fetch shifts');
-            }
-            const data = await res.json();
-            if (Array.isArray(data)) {
-                setShifts(data);
-            } else {
-                console.error('Received invalid data format for shifts:', data);
-                setShifts([]);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
             setLoading(false);
         }
     };
@@ -273,32 +242,67 @@ export default function ShiftManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && Object.keys(groupedShifts).length === 0 ? (
+                            {loading && shifts.length === 0 ? (
                                 <tr className="loading-row">
                                     <td colSpan="5" className="loading-cell">
                                         <LoadingSpinner />
                                     </td>
                                 </tr>
-                            ) : Object.keys(groupedShifts).length === 0 ? (
+                            ) : shifts.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                                         {t('no_shifts_found')}
                                     </td>
                                 </tr>
                             ) : (
-                                Object.values(groupedShifts).map(group => (
-                                    <GroupedShiftRow
-                                        key={group.id}
-                                        group={group}
-                                        onEdit={setEditingShift}
-                                        onDelete={handleDeleteShift}
-                                        t={t}
-                                    />
-                                ))
+                                (() => {
+                                    // Grouping Logic (Client-side grouping of fetched pages)
+                                    const groups = {};
+                                    shifts.forEach(shift => {
+                                        const shiftDate = new Date(shift.start_time);
+                                        const date = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
+                                        const key = `${date}_${shift.user_id}`;
+
+                                        if (!groups[key]) {
+                                            groups[key] = {
+                                                id: key,
+                                                date: shift.start_time,
+                                                user_id: shift.user_id,
+                                                user_name: shift.user_name,
+                                                shifts: [],
+                                                total_hours: 0
+                                            };
+                                        }
+
+                                        groups[key].shifts.push(shift);
+                                        groups[key].total_hours += parseFloat(shift.total_hours || 0);
+                                    });
+
+                                    return Object.values(groups).map(group => (
+                                        <GroupedShiftRow
+                                            key={group.id}
+                                            group={group}
+                                            onEdit={setEditingShift}
+                                            onDelete={handleDeleteShift}
+                                            t={t}
+                                        />
+                                    ));
+                                })()
                             )}
                         </tbody>
                     </table>
                 </div>
+                {hasMore && (
+                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={handleLoadMore}
+                            disabled={isLoadingMore}
+                        >
+                            {isLoadingMore ? <LoadingSpinner size="small" /> : t('load_more')}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {editingShift && (

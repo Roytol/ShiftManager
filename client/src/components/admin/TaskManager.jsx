@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import TaskEditModal from './TaskEditModal';
 import API_BASE_URL from '../../config';
 import LoadingSpinner from '../LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function TaskManager() {
     const [tasks, setTasks] = useState([]);
@@ -11,6 +13,7 @@ export default function TaskManager() {
 
     const [loading, setLoading] = useState(false);
     const [expandedTaskId, setExpandedTaskId] = useState(null); // For mobile expansion
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchTasks();
@@ -79,9 +82,9 @@ export default function TaskManager() {
 
     const toggleTaskStatus = async (task) => {
         const newStatus = task.status === 'active' ? 'inactive' : 'active';
-        const action = newStatus === 'active' ? 'activate' : 'deactivate';
+        const confirmMsg = newStatus === 'active' ? t('confirm_activate_task') : t('confirm_deactivate_task');
 
-        if (!window.confirm(`Are you sure you want to ${action} this task?`)) {
+        if (!window.confirm(confirmMsg)) {
             return;
         }
 
@@ -105,8 +108,10 @@ export default function TaskManager() {
         }
     };
 
+    const { showToast } = useToast();
+
     const deleteTask = async (task) => {
-        if (!window.confirm(`Are you sure you want to delete the task "${task.name}"?`)) {
+        if (!window.confirm(t('confirm_delete_task_generic'))) {
             return;
         }
 
@@ -118,13 +123,15 @@ export default function TaskManager() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
+                showToast(t('task_deleted_success'), 'success');
                 fetchTasks();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Failed to delete task');
+                showToast(data.message || t('failed_delete_task'), 'error');
             }
         } catch (err) {
             console.error(err);
+            showToast(t('error_occurred'), 'error');
         } finally {
             setLoading(false);
         }
@@ -134,7 +141,7 @@ export default function TaskManager() {
         <div>
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showCreateTask ? '1rem' : '0' }}>
-                    <h3>Create New Task</h3>
+                    <h3>{t('create_new_task')}</h3>
                     <button
                         className="btn btn-secondary"
                         onClick={() => setShowCreateTask(!showCreateTask)}
@@ -147,14 +154,14 @@ export default function TaskManager() {
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             )}
                         </svg>
-                        {showCreateTask ? 'Hide' : 'Show'}
+                        {showCreateTask ? t('hide') : t('show')}
                     </button>
                 </div>
                 <div className={`collapsible ${showCreateTask ? 'open' : ''}`}>
                     <form onSubmit={handleCreateTask} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr auto' }}>
                         <input
                             type="text"
-                            placeholder="Task Name"
+                            placeholder={t('task_name')}
                             className="form-input"
                             value={newTask.name}
                             onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
@@ -162,21 +169,21 @@ export default function TaskManager() {
                             disabled={loading}
                         />
                         <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Adding...' : 'Add Task'}
+                            {loading ? t('adding') : t('add_task')}
                         </button>
                     </form>
                 </div>
             </div>
 
             <div className="card">
-                <h3>Task List</h3>
+                <h3>{t('task_list')}</h3>
                 <div className="table-container">
                     <table className="table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{t('name')}</th>
+                                <th>{t('status')}</th>
+                                <th>{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -189,7 +196,7 @@ export default function TaskManager() {
                             ) : tasks.length === 0 ? (
                                 <tr>
                                     <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                                        No tasks found. Create one to get started!
+                                        {t('no_tasks_found')}
                                     </td>
                                 </tr>
                             ) : (
@@ -199,30 +206,30 @@ export default function TaskManager() {
                                         className={expandedTaskId === task.id ? 'mobile-expanded' : 'mobile-collapsed'}
                                         onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                                     >
-                                        <td data-label="Name">
+                                        <td data-label={t('name')}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                 {task.name}
                                                 <span className="mobile-chevron">▼</span>
                                             </div>
                                         </td>
-                                        <td data-label="Status">
+                                        <td data-label={t('status')}>
                                             <span className={`status-badge status-${task.status}`}>
-                                                {task.status}
+                                                {task.status === 'active' ? t('active') : t('inactive')}
                                             </span>
                                         </td>
-                                        <td data-label="Actions">
+                                        <td data-label={t('actions')}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); toggleTaskStatus(task); }}
                                                     className={`btn btn-sm ${task.status === 'active' ? 'btn-secondary' : 'btn-success'}`}
                                                     disabled={loading}
                                                 >
-                                                    {task.status === 'active' ? 'Deactivate' : 'Activate'}
+                                                    {task.status === 'active' ? t('deactivate') : t('activate')}
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
                                                     className="btn btn-secondary btn-icon"
-                                                    title="Edit Task"
+                                                    title={t('edit_task')}
                                                     disabled={loading}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -233,7 +240,7 @@ export default function TaskManager() {
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); deleteTask(task); }}
                                                     className="btn btn-danger btn-icon"
-                                                    title="Delete Task"
+                                                    title={t('delete_task')}
                                                     disabled={loading}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -9,8 +9,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import UserDropdown from '../components/UserDropdown';
 import API_BASE_URL from '../config';
 
+import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
+
 export default function EmployeeDashboard() {
     const { user, logout } = useAuth();
+    const { t } = useLanguage();
     const [currentShift, setCurrentShift] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -38,6 +42,8 @@ export default function EmployeeDashboard() {
 
     const [clockingIn, setClockingIn] = useState(false);
 
+    const { showToast } = useToast();
+
     const handleClockIn = async (taskId, notes) => {
         setClockingIn(true);
         const token = localStorage.getItem('token');
@@ -54,13 +60,14 @@ export default function EmployeeDashboard() {
                 await fetchStatus();
                 setIsModalOpen(false);
                 setRefreshHistory(prev => prev + 1);
+                showToast(t('clock_in_success'), 'success');
             } else {
                 const data = await res.json();
-                alert(data.message || 'Failed to clock in');
+                showToast(data.message || t('failed_clock_in'), 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('Failed to clock in');
+            showToast(t('error_occurred'), 'error');
         } finally {
             setClockingIn(false);
         }
@@ -91,7 +98,7 @@ export default function EmployeeDashboard() {
     return (
         <div className="container">
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0' }}>
-                <h1 style={{ color: 'var(--primary-color)', margin: 0 }}>ShiftManager</h1>
+                <h1 style={{ color: 'var(--primary-color)', margin: 0 }}>{t('app_name')}</h1>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <Clock />
                     <UserDropdown />

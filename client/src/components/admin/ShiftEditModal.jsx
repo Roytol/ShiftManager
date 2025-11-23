@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../../config';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ShiftEditModal({ shift, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
         status: ''
     });
     const [tasks, setTasks] = useState([]);
+    const { t } = useLanguage();
 
     useEffect(() => {
         // Format dates for datetime-local input (Local Time)
@@ -90,10 +92,10 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
                     </svg>
                 </button>
 
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Edit Shift</h2>
+                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{t('edit_shift')}</h2>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Task</label>
+                        <label className="form-label">{t('task')}</label>
                         <select
                             className="form-input"
                             value={formData.task_id}
@@ -104,7 +106,7 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Start Time</label>
+                            <label className="form-label">{t('start_time')}</label>
                             <input
                                 type="datetime-local"
                                 className="form-input"
@@ -114,7 +116,7 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
                             />
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">End Time</label>
+                            <label className="form-label">{t('end_time')}</label>
                             <input
                                 type="datetime-local"
                                 className="form-input"
@@ -124,7 +126,7 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
                         </div>
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Notes</label>
+                        <label className="form-label">{t('notes')}</label>
                         <textarea
                             className="form-input"
                             value={formData.notes}
@@ -133,8 +135,8 @@ export default function ShiftEditModal({ shift, onClose, onUpdate }) {
                         />
                     </div>
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem' }}>
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>Save Changes</button>
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
+                        <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>{t('save_changes')}</button>
                     </div>
                 </form>
             </div>

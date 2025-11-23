@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UserSettingsModal from './UserSettingsModal';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 function ThemeToggleDropdownItem() {
     const { theme, toggleTheme } = useTheme();
@@ -47,6 +48,37 @@ function ThemeToggleDropdownItem() {
                     Light Mode
                 </>
             )}
+        </button>
+    );
+}
+
+function LanguageToggleDropdownItem() {
+    const { language, toggleLanguage } = useLanguage();
+    return (
+        <button
+            onClick={toggleLanguage}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                width: '100%',
+                padding: '0.75rem 1rem',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                fontSize: '1rem',
+                borderRadius: 'var(--radius-md)'
+            }}
+            className="dropdown-item"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            {language === 'en' ? 'עברית' : 'English'}
         </button>
     );
 }
@@ -159,6 +191,7 @@ export default function UserDropdown() {
                         <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }}></div>
 
                         <ThemeToggleDropdownItem />
+                        <LanguageToggleDropdownItem />
 
                         <button
                             onClick={logout}

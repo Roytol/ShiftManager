@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../../config';
+import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function ShiftCreateModal({ onClose, onCreate }) {
     const [formData, setFormData] = useState({
@@ -11,6 +13,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
     });
     const [users, setUsers] = useState([]);
     const [tasks, setTasks] = useState([]);
+    const { t } = useLanguage();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +44,8 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
 
     const [loading, setLoading] = useState(false);
 
+    const { showToast } = useToast();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -61,10 +66,17 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
             body: JSON.stringify(payload),
         })
             .then((res) => {
-                if (res.ok) onCreate();
-                else alert('Failed to create shift');
+                if (res.ok) {
+                    showToast(t('shift_created_success'), 'success');
+                    onCreate();
+                } else {
+                    showToast(t('failed_create_shift'), 'error');
+                }
             })
-            .catch((err) => console.error(err))
+            .catch((err) => {
+                console.error(err);
+                showToast(t('error_occurred'), 'error');
+            })
             .finally(() => setLoading(false));
     };
 
@@ -89,10 +101,10 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                     </svg>
                 </button>
 
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Add New Shift</h2>
+                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{t('add_new_shift')}</h2>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Employee</label>
+                        <label className="form-label">{t('employee')}</label>
                         <select
                             className="form-input"
                             value={formData.user_id}
@@ -100,12 +112,12 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             required
                             disabled={loading}
                         >
-                            <option value="">Select Employee</option>
+                            <option value="">{t('select_employee')}</option>
                             {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                         </select>
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Task</label>
+                        <label className="form-label">{t('task')}</label>
                         <select
                             className="form-input"
                             value={formData.task_id}
@@ -113,13 +125,13 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             required
                             disabled={loading}
                         >
-                            <option value="">Select Task</option>
+                            <option value="">{t('select_task')}</option>
                             {tasks.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Start Time</label>
+                            <label className="form-label">{t('start_time')}</label>
                             <input
                                 type="datetime-local"
                                 className="form-input"
@@ -130,7 +142,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                             />
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">End Time</label>
+                            <label className="form-label">{t('end_time')}</label>
                             <input
                                 type="datetime-local"
                                 className="form-input"
@@ -141,7 +153,7 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                         </div>
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Notes</label>
+                        <label className="form-label">{t('notes')}</label>
                         <textarea
                             className="form-input"
                             value={formData.notes}
@@ -151,9 +163,9 @@ export default function ShiftCreateModal({ onClose, onCreate }) {
                         />
                     </div>
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem' }}>
-                        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
+                        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>{t('cancel')}</button>
                         <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }} disabled={loading}>
-                            {loading ? 'Creating...' : 'Create Shift'}
+                            {loading ? t('creating') : t('create_shift')}
                         </button>
                     </div>
                 </form>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ClockButton({ currentShift, onClockIn, onClockOut, disabled }) {
     const isClockedIn = !!currentShift;
     const [elapsedTime, setElapsedTime] = useState('00:00:00');
+    const { t } = useLanguage();
 
     useEffect(() => {
         let interval;
@@ -36,7 +38,7 @@ export default function ClockButton({ currentShift, onClockIn, onClockOut, disab
             {isClockedIn ? (
                 <>
                     <h2 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                        Currently Working On:
+                        {t('currently_working_on')}
                     </h2>
                     <h1 style={{ marginBottom: '0.5rem', fontSize: '2rem', color: 'var(--primary-color)' }}>
                         {currentShift.task_name}
@@ -55,27 +57,27 @@ export default function ClockButton({ currentShift, onClockIn, onClockOut, disab
                         {elapsedTime}
                     </div>
                     <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
-                        Started at: {new Date(currentShift.start_time).toLocaleTimeString()}
+                        {t('started_at')} {new Date(currentShift.start_time).toLocaleTimeString()}
                     </p>
                     <button
                         onClick={onClockOut}
                         className="btn btn-clock-large btn-clock-out"
                         disabled={disabled}
                     >
-                        {disabled ? 'Clocking Out...' : 'Clock Out'}
+                        {disabled ? t('clocking_out') : t('clock_out')}
                     </button>
                 </>
             ) : (
                 <>
                     <h2 style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
-                        Ready to start?
+                        {t('ready_to_start')}
                     </h2>
                     <button
                         onClick={onClockIn}
                         className="btn btn-clock-large btn-clock-in"
                         disabled={disabled}
                     >
-                        Clock In
+                        {t('clock_in')}
                     </button>
                 </>
             )}

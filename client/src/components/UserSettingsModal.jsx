@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../config';
+import { useLanguage } from '../context/LanguageContext';
 
 const UserSettingsModal = ({ user, onClose, onUpdate }) => {
     const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -41,7 +43,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                 setLoading(false);
             } catch (err) {
                 console.error(err);
-                setError('Failed to load user data');
+                setError(t('failed_load_user_data'));
                 setLoading(false);
             }
         }
@@ -54,18 +56,12 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
         setSuccess('');
 
         if (formData.password && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError(t('passwords_do_not_match'));
             return;
         }
 
         const token = localStorage.getItem('token');
         const { confirmPassword, ...payload } = formData;
-
-        // For non-admins, role and status are ignored by the server, but we need to pass something if the server expects it?
-        // My server change handles it by checking role.
-        // But wait, the server code I wrote:
-        // if (req.user.role === 'admin') { query += ', role = ?, status = ?'; params.push(role, status); }
-        // So if I am not admin, I don't need to send role/status.
 
         fetch(`${API_BASE_URL}/users/${user.id}`, {
             method: 'PUT',
@@ -80,7 +76,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                     const err = await res.json();
                     throw new Error(err.message);
                 }
-                setSuccess('Profile updated successfully');
+                setSuccess(t('profile_updated_success'));
                 setTimeout(onClose, 1500);
             })
             .catch((err) => setError(err.message));
@@ -107,20 +103,20 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                     </svg>
                 </button>
 
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>User Settings</h2>
+                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{t('user_settings')}</h2>
 
                 {error && <div className="error-text" style={{ textAlign: 'center', marginBottom: '1rem' }}>{error}</div>}
                 {success && <div style={{ color: 'var(--success-color)', marginBottom: '1rem', textAlign: 'center' }}>{success}</div>}
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                        Loading...
+                        {t('loading')}
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Name</label>
+                                <label className="form-label">{t('name')}</label>
                                 <input
                                     className="form-input"
                                     value={formData.name}
@@ -129,7 +125,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                                 />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Email</label>
+                                <label className="form-label">{t('email')}</label>
                                 <input
                                     type="email"
                                     className="form-input"
@@ -142,7 +138,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Employee ID</label>
+                                <label className="form-label">{t('employee_id')}</label>
                                 <input
                                     className="form-input"
                                     value={formData.employee_code}
@@ -150,7 +146,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                                 />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Birthdate</label>
+                                <label className="form-label">{t('birthdate')}</label>
                                 <input
                                     type="date"
                                     className="form-input"
@@ -164,21 +160,21 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">New Password</label>
+                                <label className="form-label">{t('new_password')}</label>
                                 <input
                                     type="password"
                                     className="form-input"
-                                    placeholder="Leave blank to keep"
+                                    placeholder={t('leave_blank_to_keep')}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Confirm Password</label>
+                                <label className="form-label">{t('confirm_password')}</label>
                                 <input
                                     type="password"
                                     className="form-input"
-                                    placeholder="Confirm new password"
+                                    placeholder={t('confirm_new_password')}
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 />
@@ -187,10 +183,10 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
 
                         <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                             <button type="button" className="btn btn-secondary" onClick={onClose}>
-                                Cancel
+                                {t('cancel')}
                             </button>
                             <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }}>
-                                Save Changes
+                                {t('save_changes')}
                             </button>
                         </div>
                     </form>

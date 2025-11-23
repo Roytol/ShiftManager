@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../../config';
 import LoadingSpinner from '../LoadingSpinner';
+import TableSkeleton from '../TableSkeleton';
+import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const EmployeeManager = () => {
     const [employees, setEmployees] = useState([]);
@@ -19,6 +22,8 @@ const EmployeeManager = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
     const [expandedEmployeeId, setExpandedEmployeeId] = useState(null); // For mobile expansion
+    const { showToast } = useToast();
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchEmployees();
@@ -52,11 +57,11 @@ const EmployeeManager = () => {
         setError('');
 
         if (!isEditing && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError(t('passwords_do_not_match'));
             return;
         }
         if (isEditing && formData.password && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError(t('passwords_do_not_match'));
             return;
         }
 
@@ -142,7 +147,7 @@ const EmployeeManager = () => {
     };
 
     const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        if (!window.confirm(t('confirm_delete_user'))) {
             return;
         }
         if (!currentEmployee) return;
@@ -155,14 +160,17 @@ const EmployeeManager = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
+                showToast(t('user_deleted_success'), 'success');
                 fetchEmployees();
                 handleCloseModal();
             } else {
                 const data = await res.json();
                 setError(data.message);
+                showToast(data.message || t('user_delete_fail'), 'error');
             }
         } catch (err) {
             setError(err.message);
+            showToast(err.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -171,9 +179,9 @@ const EmployeeManager = () => {
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3>Employee Management</h3>
+                <h3>{t('employee_management')}</h3>
                 <button className="btn btn-primary" onClick={handleAdd}>
-                    Add New Employee
+                    {t('add_new_employee')}
                 </button>
             </div>
 
@@ -198,14 +206,14 @@ const EmployeeManager = () => {
                             </svg>
                         </button>
 
-                        <h3 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{isEditing ? 'Edit Employee' : 'Add New Employee'}</h3>
+                        <h3 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{isEditing ? t('edit_employee') : t('add_new_employee')}</h3>
                         {error && <div className="error-text" style={{ textAlign: 'center', marginBottom: '1rem' }}>{error}</div>}
                         <form onSubmit={(e) => {
                             handleSubmit(e);
                         }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Name</label>
+                                    <label className="form-label">{t('name')}</label>
                                     <input
                                         className="form-input"
                                         value={formData.name}
@@ -215,7 +223,7 @@ const EmployeeManager = () => {
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">{t('email')}</label>
                                     <input
                                         type="email"
                                         className="form-input"
@@ -229,7 +237,7 @@ const EmployeeManager = () => {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Employee ID</label>
+                                    <label className="form-label">{t('employee_id')}</label>
                                     <input
                                         className="form-input"
                                         value={formData.employee_code}
@@ -238,7 +246,7 @@ const EmployeeManager = () => {
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Birthdate</label>
+                                    <label className="form-label">{t('birthdate')}</label>
                                     <input
                                         type="date"
                                         className="form-input"
@@ -253,11 +261,11 @@ const EmployeeManager = () => {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Password {isEditing && '(Optional)'}</label>
+                                    <label className="form-label">{t('password')} {isEditing && t('optional')}</label>
                                     <input
                                         type="password"
                                         className="form-input"
-                                        placeholder={isEditing ? "Leave blank to keep" : ""}
+                                        placeholder={isEditing ? t('leave_blank_to_keep') : ""}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required={!isEditing}
@@ -265,7 +273,7 @@ const EmployeeManager = () => {
                                     />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Confirm Password</label>
+                                    <label className="form-label">{t('confirm_password')}</label>
                                     <input
                                         type="password"
                                         className="form-input"
@@ -279,27 +287,27 @@ const EmployeeManager = () => {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Role</label>
+                                    <label className="form-label">{t('role')}</label>
                                     <select
                                         className="form-input"
                                         value={formData.role}
                                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         disabled={loading}
                                     >
-                                        <option value="employee">Employee</option>
-                                        <option value="admin">Admin</option>
+                                        <option value="employee">{t('employee')}</option>
+                                        <option value="admin">{t('admin')}</option>
                                     </select>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Status</label>
+                                    <label className="form-label">{t('status')}</label>
                                     <select
                                         className="form-input"
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                         disabled={loading}
                                     >
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
+                                        <option value="active">{t('active')}</option>
+                                        <option value="inactive">{t('inactive')}</option>
                                     </select>
                                 </div>
                             </div>
@@ -313,15 +321,15 @@ const EmployeeManager = () => {
                                         onClick={handleDelete}
                                         disabled={loading}
                                     >
-                                        {loading ? 'Deleting...' : 'Delete User'}
+                                        {loading ? t('deleting') : t('delete_user')}
                                     </button>
                                 )}
                                 <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
                                     <button type="button" className="btn btn-secondary" onClick={handleCloseModal} disabled={loading}>
-                                        Cancel
+                                        {t('cancel')}
                                     </button>
                                     <button type="submit" className="btn btn-primary" style={{ minWidth: '120px' }} disabled={loading}>
-                                        {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create User')}
+                                        {loading ? t('saving') : (isEditing ? t('save_changes') : t('create_user'))}
                                     </button>
                                 </div>
                             </div>
@@ -331,14 +339,14 @@ const EmployeeManager = () => {
             )}
 
             <div className="card">
-                <h3>Employee List</h3>
+                <h3>{t('employee_list')}</h3>
                 <div className="table-container">
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
                         <thead>
                             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
-                                <th style={{ padding: '0.5rem' }}>Name</th>
-                                <th style={{ padding: '0.5rem' }}>Role</th>
-                                <th style={{ padding: '0.5rem', textAlign: 'right' }}>Actions</th>
+                                <th style={{ padding: '0.5rem' }}>{t('name')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('role')}</th>
+                                <th style={{ padding: '0.5rem', textAlign: 'right' }}>{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -351,7 +359,7 @@ const EmployeeManager = () => {
                             ) : employees.length === 0 ? (
                                 <tr>
                                     <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                                        No employees found.
+                                        {t('no_employees_found')}
                                     </td>
                                 </tr>
                             ) : (
@@ -362,7 +370,7 @@ const EmployeeManager = () => {
                                         className={expandedEmployeeId === emp.id ? 'mobile-expanded' : 'mobile-collapsed'}
                                         onClick={() => setExpandedEmployeeId(expandedEmployeeId === emp.id ? null : emp.id)}
                                     >
-                                        <td data-label="Name" style={{ padding: '0.5rem' }}>
+                                        <td data-label={t('name')} style={{ padding: '0.5rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start' }}>
                                                 <span style={{
                                                     width: '10px',
@@ -375,12 +383,12 @@ const EmployeeManager = () => {
                                                 <span className="mobile-chevron">▼</span>
                                             </div>
                                         </td>
-                                        <td data-label="Role" style={{ padding: '0.5rem' }}>{emp.role}</td>
-                                        <td data-label="Actions" style={{ padding: '0.5rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                        <td data-label={t('role')} style={{ padding: '0.5rem' }}>{emp.role === 'admin' ? t('admin') : t('employee')}</td>
+                                        <td data-label={t('actions')} style={{ padding: '0.5rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                             <button
                                                 className="btn btn-secondary btn-icon"
                                                 onClick={(e) => { e.stopPropagation(); handleEditClick(emp); }}
-                                                title="Edit"
+                                                title={t('edit')}
                                                 disabled={loading}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -391,7 +399,7 @@ const EmployeeManager = () => {
                                                 className="btn btn-danger btn-icon"
                                                 onClick={async (e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                                                    if (window.confirm(t('confirm_delete_user'))) {
                                                         setLoading(true);
                                                         const token = localStorage.getItem('token');
                                                         try {
@@ -401,19 +409,20 @@ const EmployeeManager = () => {
                                                             });
                                                             const data = await res.json();
                                                             if (res.ok) {
+                                                                showToast(t('user_deleted_success'), 'success');
                                                                 setEmployees(employees.filter(e => e.id !== emp.id));
                                                             } else {
-                                                                alert(data.message);
+                                                                showToast(data.message || t('user_delete_fail'), 'error');
                                                             }
                                                         } catch (err) {
                                                             console.error(err);
-                                                            alert('Failed to delete user');
+                                                            showToast(t('error_occurred'), 'error');
                                                         } finally {
                                                             setLoading(false);
                                                         }
                                                     }
                                                 }}
-                                                title="Delete"
+                                                title={t('delete')}
                                                 disabled={loading}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

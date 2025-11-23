@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { formatDate, formatTime, formatDuration } from '../../utils/formatters';
 import LoadingSpinner from '../LoadingSpinner';
+import API_BASE_URL from '../../config';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function Reports() {
     const [shifts, setShifts] = useState([]);
@@ -15,6 +17,7 @@ export default function Reports() {
     const [exportFormat, setExportFormat] = useState('csv');
     const [stats, setStats] = useState({ totalHours: 0, taskDistribution: {} });
     const [loading, setLoading] = useState(false);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchShifts();
@@ -123,22 +126,22 @@ export default function Reports() {
 
         Object.keys(groupedData).sort().forEach(employee => {
             const data = groupedData[employee];
-            wsData.push([`Employee: ${employee}`]);
+            wsData.push([`${t('employee')}: ${employee}`]);
             wsData.push([]);
-            wsData.push(['Date', 'Task', 'Start Time', 'End Time', 'Duration']);
+            wsData.push([t('date'), t('task'), t('start_time'), t('end_time'), t('duration')]);
             data.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)).forEach(shift => {
                 wsData.push([
                     formatDate(shift.start_time),
                     shift.task_name,
                     formatTime(shift.start_time),
-                    shift.end_time ? formatTime(shift.end_time) : 'Active',
+                    shift.end_time ? formatTime(shift.end_time) : t('active'),
                     formatDuration(shift.total_hours)
                 ]);
             });
-            wsData.push(['', '', '', 'Total Hours:', formatDuration(data.totalHours)]);
+            wsData.push(['', '', '', `${t('total_hours')}:`, formatDuration(data.totalHours)]);
             wsData.push([]);
-            wsData.push(['Task Distribution']);
-            wsData.push(['Task Name', 'Total Hours', 'Percentage']);
+            wsData.push([t('task_distribution_summary')]);
+            wsData.push([t('task_name'), t('total_hours'), t('percentage')]);
             Object.keys(data.tasks).sort().forEach(taskName => {
                 const hours = data.tasks[taskName];
                 const percentage = data.totalHours > 0 ? ((hours / data.totalHours) * 100).toFixed(2) + '%' : '0%';
@@ -150,7 +153,7 @@ export default function Reports() {
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Shifts Report");
+        XLSX.utils.book_append_sheet(wb, ws, t('shifts_report'));
         XLSX.writeFile(wb, "shifts_report.xlsx");
     };
 
@@ -160,21 +163,21 @@ export default function Reports() {
 
         Object.keys(groupedData).sort().forEach(employee => {
             const data = groupedData[employee];
-            csvContent += `Employee: ${employee}\n\n`;
-            csvContent += "Date,Task,Start Time,End Time,Duration\n";
+            csvContent += `${t('employee')}: ${employee}\n\n`;
+            csvContent += `${t('date')},${t('task')},${t('start_time')},${t('end_time')},${t('duration')}\n`;
             data.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)).forEach(shift => {
                 const row = [
                     formatDate(shift.start_time),
                     shift.task_name,
                     formatTime(shift.start_time),
-                    shift.end_time ? formatTime(shift.end_time) : 'Active',
+                    shift.end_time ? formatTime(shift.end_time) : t('active'),
                     formatDuration(shift.total_hours)
                 ].map(item => `"${item}"`).join(",");
                 csvContent += row + "\n";
             });
-            csvContent += `,,,Total Hours:,${formatDuration(data.totalHours)}\n\n`;
-            csvContent += "Task Distribution\n";
-            csvContent += "Task Name,Total Hours,Percentage\n";
+            csvContent += `,,,${t('total_hours')}:,${formatDuration(data.totalHours)}\n\n`;
+            csvContent += `${t('task_distribution_summary')}\n`;
+            csvContent += `${t('task_name')},${t('total_hours')},${t('percentage')}\n`;
             Object.keys(data.tasks).sort().forEach(taskName => {
                 const hours = data.tasks[taskName];
                 const percentage = data.totalHours > 0 ? ((hours / data.totalHours) * 100).toFixed(2) + '%' : '0%';
@@ -205,7 +208,7 @@ export default function Reports() {
         <div>
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3>Reports & Exports</h3>
+                    <h3>{t('reports_exports')}</h3>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <select
                             className="form-input"
@@ -217,27 +220,27 @@ export default function Reports() {
                             <option value="xlsx">Excel (XLSX)</option>
                         </select>
                         <button className="btn btn-secondary" onClick={handleExport}>
-                            Export Report
+                            {t('export_report')}
                         </button>
                     </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     <div className="form-group">
-                        <label className="form-label">Filter by Employee</label>
+                        <label className="form-label">{t('filter_by_employee')}</label>
                         <select
                             className="form-input"
                             value={filters.employeeId}
                             onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}
                         >
-                            <option value="">All Employees</option>
+                            <option value="">{t('all_employees')}</option>
                             {employees.map(emp => (
                                 <option key={emp.id} value={emp.id}>{emp.name}</option>
                             ))}
                         </select>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Month</label>
+                        <label className="form-label">{t('month')}</label>
                         <select
                             className="form-input"
                             value={filters.month}
@@ -249,7 +252,7 @@ export default function Reports() {
                         </select>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Year</label>
+                        <label className="form-label">{t('year')}</label>
                         <input
                             type="number"
                             className="form-input"
@@ -261,17 +264,17 @@ export default function Reports() {
             </div>
 
             <div className="card">
-                <h3>Task Distribution Summary</h3>
+                <h3>{t('task_distribution_summary')}</h3>
                 <div style={{ marginTop: '1rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '600' }}>
-                    Total Hours: {formatDuration(stats.totalHours)}
+                    {t('total_hours')}: {formatDuration(stats.totalHours)}
                 </div>
                 <div className="table-container">
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
-                                <th style={{ padding: '0.5rem' }}>Task Name</th>
-                                <th style={{ padding: '0.5rem' }}>Total Hours</th>
-                                <th style={{ padding: '0.5rem' }}>Percentage</th>
+                                <th style={{ padding: '0.5rem' }}>{t('task_name')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('total_hours')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('percentage')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -303,7 +306,7 @@ export default function Reports() {
                             ) : (
                                 <tr>
                                     <td colSpan="3" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                        No data found for the selected filters.
+                                        {t('no_data_found')}
                                     </td>
                                 </tr>
                             )}

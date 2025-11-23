@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -37,12 +39,12 @@ export default function LoginPage() {
             background: 'var(--background-color)'
         }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '0.5rem', color: 'var(--primary-color)', fontSize: '2.5rem' }}>ShiftManager</h1>
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', color: 'var(--text-secondary)' }}>Sign In</h2>
+                <h1 style={{ textAlign: 'center', marginBottom: '0.5rem', color: 'var(--primary-color)', fontSize: '2.5rem' }}>{t('app_name')}</h1>
+                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', color: 'var(--text-secondary)' }}>{t('sign_in')}</h2>
                 {error && <div className="error-text" style={{ marginBottom: '1rem' }}>{error}</div>}
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Email</label>
+                        <label className="form-label">{t('email')}</label>
                         <input
                             type="email"
                             className="form-input"
@@ -53,7 +55,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Password</label>
+                        <label className="form-label">{t('password')}</label>
                         <input
                             type="password"
                             className="form-input"
@@ -64,7 +66,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? t('signing_in') : t('sign_in')}
                     </button>
                 </form>
             </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RequestEditModal({ shift, onClose, onRequest }) {
     // Helper to split ISO string into date and time
@@ -20,6 +21,7 @@ export default function RequestEditModal({ shift, onClose, onRequest }) {
     const [endDate, setEndDate] = useState(end.date);
     const [endTime, setEndTime] = useState(end.time);
     const [reason, setReason] = useState('');
+    const { t } = useLanguage();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -54,11 +56,11 @@ export default function RequestEditModal({ shift, onClose, onRequest }) {
                 >
                     &times;
                 </button>
-                <h2 style={{ marginBottom: '1.5rem' }}>Request Shift Edit</h2>
+                <h2 style={{ marginBottom: '1.5rem' }}>{t('request_shift_edit')}</h2>
                 <form onSubmit={handleSubmit}>
                     {/* Start Time Section */}
                     <div className="form-group">
-                        <label className="form-label">Start Time</label>
+                        <label className="form-label">{t('start_time')}</label>
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             <input
                                 type="date"
@@ -81,7 +83,7 @@ export default function RequestEditModal({ shift, onClose, onRequest }) {
 
                     {/* End Time Section */}
                     <div className="form-group">
-                        <label className="form-label">End Time</label>
+                        <label className="form-label">{t('end_time')}</label>
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             <input
                                 type="date"
@@ -103,22 +105,22 @@ export default function RequestEditModal({ shift, onClose, onRequest }) {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Reason for Change</label>
+                        <label className="form-label">{t('reason_for_change')}</label>
                         <textarea
                             className="form-input"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             rows="3"
-                            placeholder="e.g., Forgot to clock out, System error..."
+                            placeholder={t('reason_placeholder')}
                             required
                         />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                         <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            Cancel
+                            {t('cancel')}
                         </button>
                         <button type="submit" className="btn btn-primary">
-                            Submit Request
+                            {t('submit_request')}
                         </button>
                     </div>
                 </form>

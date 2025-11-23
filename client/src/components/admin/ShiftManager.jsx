@@ -3,7 +3,10 @@ import ShiftEditModal from './ShiftEditModal';
 import ShiftCreateModal from './ShiftCreateModal';
 import { formatDate, formatTime, formatDuration } from '../../utils/formatters';
 import LoadingSpinner from '../LoadingSpinner';
+import TableSkeleton from '../TableSkeleton';
+import { useToast } from '../../context/ToastContext';
 import API_BASE_URL from '../../config';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ShiftManager() {
     const [shifts, setShifts] = useState([]);
@@ -22,6 +25,7 @@ export default function ShiftManager() {
     const [sortOption, setSortOption] = useState('date_desc'); // Default: Newest First
 
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchShifts();
@@ -32,8 +36,10 @@ export default function ShiftManager() {
         applyFilters();
     }, [shifts, filters, sortOption]);
 
+    const { showToast } = useToast();
+
     const handleDeleteShift = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this shift?')) return;
+        if (!window.confirm(t('confirm_delete_shift'))) return;
 
         setLoading(true);
         try {
@@ -44,13 +50,15 @@ export default function ShiftManager() {
             });
 
             if (res.ok) {
+                showToast(t('shift_deleted_success'), 'success');
                 fetchShifts();
             } else {
-                alert('Failed to delete shift');
+                showToast(t('shift_delete_fail'), 'error');
                 setLoading(false);
             }
         } catch (err) {
             console.error(err);
+            showToast(t('error_occurred'), 'error');
             setLoading(false);
         }
     };
@@ -173,7 +181,7 @@ export default function ShiftManager() {
         <div>
             <div className="card" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3>Shift Management</h3>
+                    <h3>{t('shift_management')}</h3>
                     <button
                         className="btn btn-secondary"
                         onClick={() => setShowFilters(!showFilters)}
@@ -182,7 +190,7 @@ export default function ShiftManager() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                         </svg>
-                        Filter & Sort
+                        {t('filter_sort')}
                     </button>
                     <button
                         className="btn btn-primary"
@@ -193,42 +201,42 @@ export default function ShiftManager() {
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
-                        Add Shift
+                        {t('add_shift')}
                     </button>
                 </div>
 
                 <div className={`collapsible ${showFilters ? 'open' : ''}`}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '1rem' }}>
                         <div className="form-group">
-                            <label className="form-label">Sort By</label>
+                            <label className="form-label">{t('sort_by')}</label>
                             <select
                                 className="form-input"
                                 value={sortOption}
                                 onChange={(e) => setSortOption(e.target.value)}
                             >
-                                <option value="date_desc">Date (Newest First)</option>
-                                <option value="date_asc">Date (Oldest First)</option>
-                                <option value="name_asc">Employee (A-Z)</option>
-                                <option value="name_desc">Employee (Z-A)</option>
-                                <option value="duration_desc">Duration (Longest)</option>
-                                <option value="duration_asc">Duration (Shortest)</option>
+                                <option value="date_desc">{t('sort_date_newest')}</option>
+                                <option value="date_asc">{t('sort_date_oldest')}</option>
+                                <option value="name_asc">{t('sort_employee_az')}</option>
+                                <option value="name_desc">{t('sort_employee_za')}</option>
+                                <option value="duration_desc">{t('sort_duration_longest')}</option>
+                                <option value="duration_asc">{t('sort_duration_shortest')}</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Filter by Employee</label>
+                            <label className="form-label">{t('filter_by_employee')}</label>
                             <select
                                 className="form-input"
                                 value={filters.employeeId}
                                 onChange={(e) => setFilters({ ...filters, employeeId: e.target.value })}
                             >
-                                <option value="">All Employees</option>
+                                <option value="">{t('all_employees')}</option>
                                 {users.map(emp => (
                                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Month</label>
+                            <label className="form-label">{t('month')}</label>
                             <select
                                 className="form-input"
                                 value={filters.month}
@@ -240,7 +248,7 @@ export default function ShiftManager() {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Year</label>
+                            <label className="form-label">{t('year')}</label>
                             <input
                                 type="number"
                                 className="form-input"
@@ -257,11 +265,11 @@ export default function ShiftManager() {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
-                                <th style={{ padding: '0.5rem' }}>Group / Employee</th>
-                                <th style={{ padding: '0.5rem' }}>Date</th>
-                                <th style={{ padding: '0.5rem' }}>Shifts</th>
-                                <th style={{ padding: '0.5rem' }}>Total Duration</th>
-                                <th style={{ padding: '0.5rem' }}>Actions</th>
+                                <th style={{ padding: '0.5rem' }}>{t('group_employee')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('date')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('shifts')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('total_duration')}</th>
+                                <th style={{ padding: '0.5rem' }}>{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -274,7 +282,7 @@ export default function ShiftManager() {
                             ) : Object.keys(groupedShifts).length === 0 ? (
                                 <tr>
                                     <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                                        No shifts found matching your filters.
+                                        {t('no_shifts_found')}
                                     </td>
                                 </tr>
                             ) : (
@@ -284,6 +292,7 @@ export default function ShiftManager() {
                                         group={group}
                                         onEdit={setEditingShift}
                                         onDelete={handleDeleteShift}
+                                        t={t}
                                     />
                                 ))
                             )}
@@ -316,7 +325,7 @@ export default function ShiftManager() {
     );
 }
 
-function GroupedShiftRow({ group, onEdit, onDelete }) {
+function GroupedShiftRow({ group, onEdit, onDelete, t }) {
     const [expanded, setExpanded] = useState(false);
 
     return (
@@ -329,7 +338,7 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                 }}
                 onClick={() => setExpanded(!expanded)}
             >
-                <td data-label="Employee" style={{ padding: '1rem 0.5rem', fontWeight: '600' }}>
+                <td data-label={t('employee')} style={{ padding: '1rem 0.5rem', fontWeight: '600' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start' }}>
                         <span style={{
                             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
@@ -338,14 +347,14 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                         {group.user_name}
                     </div>
                 </td>
-                <td data-label="Date" style={{ padding: '1rem 0.5rem' }}>{formatDate(group.date)}</td>
-                <td data-label="Shifts" style={{ padding: '1rem 0.5rem' }}>{group.shifts.length} shifts</td>
-                <td data-label="Total Duration" style={{ padding: '1rem 0.5rem', fontWeight: '600', color: 'var(--primary-color)' }}>
+                <td data-label={t('date')} style={{ padding: '1rem 0.5rem' }}>{formatDate(group.date)}</td>
+                <td data-label={t('shifts')} style={{ padding: '1rem 0.5rem' }}>{group.shifts.length} {t('shifts')}</td>
+                <td data-label={t('total_duration')} style={{ padding: '1rem 0.5rem', fontWeight: '600', color: 'var(--primary-color)' }}>
                     {formatDuration(group.total_hours)}
                 </td>
-                <td data-label="Actions" style={{ padding: '1rem 0.5rem' }}>
+                <td data-label={t('actions')} style={{ padding: '1rem 0.5rem' }}>
                     <button className="btn btn-sm btn-secondary">
-                        {expanded ? 'Collapse' : 'Expand'}
+                        {expanded ? t('collapse') : t('expand')}
                     </button>
                 </td>
             </tr>
@@ -356,25 +365,25 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                             <table style={{ width: '100%', fontSize: '0.9rem' }}>
                                 <thead>
                                     <tr style={{ color: 'var(--text-secondary)' }}>
-                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>Task</th>
-                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>Time</th>
-                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>Duration</th>
-                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>Actions</th>
+                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>{t('task')}</th>
+                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>{t('time')}</th>
+                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>{t('duration')}</th>
+                                        <th style={{ padding: '0.5rem', textAlign: 'left' }}>{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {group.shifts.map(shift => (
                                         <tr key={shift.id} style={{ borderTop: '1px solid var(--border-color-light)' }}>
-                                            <td data-label="Task" style={{ padding: '0.5rem' }}>{shift.task_name}</td>
-                                            <td data-label="Time" style={{ padding: '0.5rem' }}>
-                                                {formatTime(shift.start_time)} - {shift.end_time ? formatTime(shift.end_time) : 'Active'}
+                                            <td data-label={t('task')} style={{ padding: '0.5rem' }}>{shift.task_name}</td>
+                                            <td data-label={t('time')} style={{ padding: '0.5rem' }}>
+                                                {formatTime(shift.start_time)} - {shift.end_time ? formatTime(shift.end_time) : t('active')}
                                             </td>
-                                            <td data-label="Duration" style={{ padding: '0.5rem' }}>{formatDuration(shift.total_hours)}</td>
-                                            <td data-label="Actions" style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                            <td data-label={t('duration')} style={{ padding: '0.5rem' }}>{formatDuration(shift.total_hours)}</td>
+                                            <td data-label={t('actions')} style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                 <button
                                                     className="btn btn-secondary btn-icon"
                                                     onClick={(e) => { e.stopPropagation(); onEdit(shift); }}
-                                                    title="Edit"
+                                                    title={t('edit')}
                                                     style={{ padding: '0.25rem' }}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -384,7 +393,7 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                                                 <button
                                                     className="btn btn-danger btn-icon"
                                                     onClick={(e) => { e.stopPropagation(); onDelete(shift.id); }}
-                                                    title="Delete"
+                                                    title={t('delete')}
                                                     style={{ padding: '0.25rem' }}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">

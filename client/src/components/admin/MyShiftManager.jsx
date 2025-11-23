@@ -4,6 +4,8 @@ import ClockButton from '../ClockButton';
 import TaskSelectorModal from '../TaskSelectorModal';
 import ShiftHistory from '../ShiftHistory';
 import LoadingSpinner from '../LoadingSpinner';
+import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const MyShiftManager = () => {
     const [currentShift, setCurrentShift] = useState(null);
@@ -33,8 +35,23 @@ const MyShiftManager = () => {
         }
     };
 
+    const { showToast } = useToast();
+    const { t } = useLanguage();
+
     const handleClockIn = async (taskId) => {
+        // Optimistic Update
+        const previousShift = currentShift;
+        const tempShift = {
+            id: 'temp-id',
+            task_id: taskId,
+            task_name: 'Loading...', // Ideally we'd get the task name from the modal, but this is okay for a split second
+            start_time: new Date().toISOString(),
+            status: 'active'
+        };
+        setCurrentShift(tempShift);
+        setIsTaskModalOpen(false);
         setActionLoading(true);
+
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/shifts/clock-in`, {
@@ -46,19 +63,27 @@ const MyShiftManager = () => {
                 body: JSON.stringify({ task_id: taskId })
             });
             if (res.ok) {
+                showToast(t('clock_in_success'), 'success');
                 await fetchStatus();
-                setIsTaskModalOpen(false);
                 setRefreshHistory(prev => prev + 1);
+            } else {
+                throw new Error('Failed to clock in');
             }
         } catch (err) {
             console.error(err);
+            setCurrentShift(previousShift); // Revert
+            showToast(t('failed_clock_in'), 'error');
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleClockOut = async () => {
+        // Optimistic Update
+        const previousShift = currentShift;
+        setCurrentShift(null);
         setActionLoading(true);
+
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/shifts/clock-out`, {
@@ -66,11 +91,16 @@ const MyShiftManager = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
+                showToast(t('clock_out_success'), 'success');
                 await fetchStatus();
                 setRefreshHistory(prev => prev + 1);
+            } else {
+                throw new Error('Failed to clock out');
             }
         } catch (err) {
             console.error(err);
+            setCurrentShift(previousShift); // Revert
+            showToast(t('failed_clock_out'), 'error');
         } finally {
             setActionLoading(false);
         }

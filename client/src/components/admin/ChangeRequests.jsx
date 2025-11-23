@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { formatDate, formatTime } from '../../utils/formatters';
 import API_BASE_URL from '../../config';
 import LoadingSpinner from '../LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function ChangeRequests() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchRequests();
@@ -27,8 +30,10 @@ export default function ChangeRequests() {
         }
     };
 
+    const { showToast } = useToast();
+
     const handleApprove = async (id) => {
-        if (!window.confirm('Are you sure you want to approve this change?')) return;
+        if (!window.confirm(t('confirm_approve_request'))) return;
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/admin/change-requests/${id}/approve`, {
@@ -36,16 +41,17 @@ export default function ChangeRequests() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                alert('Request approved.');
+                showToast(t('request_approved'), 'success');
                 fetchRequests();
             }
         } catch (err) {
             console.error(err);
+            showToast(t('error_occurred'), 'error');
         }
     };
 
     const handleReject = (id) => {
-        if (!window.confirm('Are you sure you want to reject this request?')) return;
+        if (!window.confirm(t('confirm_reject_request'))) return;
 
         const token = localStorage.getItem('token');
         fetch(`${API_BASE_URL}/admin/change-requests/${id}/reject`, {
@@ -54,11 +60,14 @@ export default function ChangeRequests() {
         })
             .then((res) => {
                 if (res.ok) {
-                    alert('Request rejected.');
+                    showToast(t('request_rejected'), 'success');
                     fetchRequests();
                 }
             })
-            .catch((err) => console.error(err));
+            .catch((err) => {
+                console.error(err);
+                showToast(t('error_occurred'), 'error');
+            });
     };
 
     if (loading) return (
@@ -69,24 +78,24 @@ export default function ChangeRequests() {
 
     return (
         <div className="card">
-            <h2 style={{ marginBottom: '1.5rem' }}>Shift Change Requests</h2>
+            <h2 style={{ marginBottom: '1.5rem' }}>{t('shift_change_requests')}</h2>
             <div className="table-container">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
-                            <th style={{ padding: '0.5rem' }}>Employee</th>
-                            <th style={{ padding: '0.5rem' }}>Task</th>
-                            <th style={{ padding: '0.5rem' }}>Original Time</th>
-                            <th style={{ padding: '0.5rem' }}>Requested Time</th>
-                            <th style={{ padding: '0.5rem' }}>Reason</th>
-                            <th style={{ padding: '0.5rem' }}>Actions</th>
+                            <th style={{ padding: '0.5rem' }}>{t('employee')}</th>
+                            <th style={{ padding: '0.5rem' }}>{t('task')}</th>
+                            <th style={{ padding: '0.5rem' }}>{t('original_time')}</th>
+                            <th style={{ padding: '0.5rem' }}>{t('requested_time')}</th>
+                            <th style={{ padding: '0.5rem' }}>{t('reason')}</th>
+                            <th style={{ padding: '0.5rem' }}>{t('actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {requests.length === 0 ? (
                             <tr>
                                 <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                                    No pending requests.
+                                    {t('no_pending_requests')}
                                 </td>
                             </tr>
                         ) : (
@@ -113,14 +122,14 @@ export default function ChangeRequests() {
                                             style={{ backgroundColor: 'var(--success-color)', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
                                             onClick={() => handleApprove(req.id)}
                                         >
-                                            Approve
+                                            {t('approve')}
                                         </button>
                                         <button
                                             className="btn btn-danger"
                                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
                                             onClick={() => handleReject(req.id)}
                                         >
-                                            Reject
+                                            {t('reject')}
                                         </button>
                                     </td>
                                 </tr>

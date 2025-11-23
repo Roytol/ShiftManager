@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../config';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading: actionLoading }) {
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState('');
     const [notes, setNotes] = useState('');
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (isOpen) {
@@ -36,14 +38,14 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading:
             backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center'
         }}>
             <div className="card" style={{ width: '100%', maxWidth: '500px' }}>
-                <h2 style={{ marginBottom: '1rem' }}>Clock In - Select Task</h2>
+                <h2 style={{ marginBottom: '1rem' }}>{t('clock_in_select_task')}</h2>
 
                 {loading ? (
-                    <p>Loading tasks...</p>
+                    <p>{t('loading_tasks')}</p>
                 ) : (
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label className="form-label">Task (Mandatory)</label>
+                            <label className="form-label">{t('task_mandatory')}</label>
                             <select
                                 className="form-input"
                                 value={selectedTask}
@@ -51,7 +53,7 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading:
                                 required
                                 disabled={actionLoading}
                             >
-                                <option value="">-- Select a Task --</option>
+                                <option value="">{t('select_a_task_placeholder')}</option>
                                 {tasks.map((task) => (
                                     <option key={task.id} value={task.id}>
                                         {task.name}
@@ -61,7 +63,7 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading:
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Notes (Optional)</label>
+                            <label className="form-label">{t('notes')}</label>
                             <textarea
                                 className="form-input"
                                 value={notes}
@@ -73,10 +75,10 @@ export default function TaskSelectorModal({ isOpen, onClose, onConfirm, loading:
 
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={actionLoading}>
-                                Cancel
+                                {t('cancel')}
                             </button>
                             <button type="submit" className="btn btn-primary" disabled={!selectedTask || actionLoading}>
-                                {actionLoading ? 'Clocking In...' : 'Clock In'}
+                                {actionLoading ? t('clocking_in') : t('clock_in')}
                             </button>
                         </div>
                     </form>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function TaskEditModal({ task, onClose, onSave }) {
     const [name, setName] = useState('');
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (task) {
@@ -37,10 +39,10 @@ export default function TaskEditModal({ task, onClose, onSave }) {
                     </svg>
                 </button>
 
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Edit Task</h2>
+                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>{t('edit_task')}</h2>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Task Name</label>
+                        <label className="form-label">{t('task_name')}</label>
                         <input
                             type="text"
                             className="form-input"
@@ -51,10 +53,10 @@ export default function TaskEditModal({ task, onClose, onSave }) {
                     </div>
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                         <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            Cancel
+                            {t('cancel')}
                         </button>
                         <button type="submit" className="btn btn-primary" style={{ minWidth: '100px' }}>
-                            Save
+                            {t('save')}
                         </button>
                     </div>
                 </form>

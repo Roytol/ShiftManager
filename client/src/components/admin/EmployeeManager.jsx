@@ -18,6 +18,7 @@ const EmployeeManager = () => {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
+    const [expandedEmployeeId, setExpandedEmployeeId] = useState(null); // For mobile expansion
 
     useEffect(() => {
         fetchEmployees();
@@ -355,22 +356,30 @@ const EmployeeManager = () => {
                                 </tr>
                             ) : (
                                 employees.map((emp) => (
-                                    <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{
-                                                width: '10px',
-                                                height: '10px',
-                                                borderRadius: '50%',
-                                                backgroundColor: emp.is_clocked_in ? 'var(--success-color)' : 'var(--error-color)',
-                                                display: 'inline-block'
-                                            }}></span>
-                                            {emp.name}
+                                    <tr
+                                        key={emp.id}
+                                        style={{ borderBottom: '1px solid var(--border-color)' }}
+                                        className={expandedEmployeeId === emp.id ? 'mobile-expanded' : 'mobile-collapsed'}
+                                        onClick={() => setExpandedEmployeeId(expandedEmployeeId === emp.id ? null : emp.id)}
+                                    >
+                                        <td data-label="Name" style={{ padding: '0.5rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start' }}>
+                                                <span style={{
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: emp.is_clocked_in ? 'var(--success-color)' : 'var(--error-color)',
+                                                    display: 'inline-block'
+                                                }}></span>
+                                                {emp.name}
+                                                <span className="mobile-chevron">▼</span>
+                                            </div>
                                         </td>
-                                        <td style={{ padding: '0.5rem' }}>{emp.role}</td>
-                                        <td style={{ padding: '0.5rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                        <td data-label="Role" style={{ padding: '0.5rem' }}>{emp.role}</td>
+                                        <td data-label="Actions" style={{ padding: '0.5rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                             <button
                                                 className="btn btn-secondary btn-icon"
-                                                onClick={() => handleEditClick(emp)}
+                                                onClick={(e) => { e.stopPropagation(); handleEditClick(emp); }}
                                                 title="Edit"
                                                 disabled={loading}
                                             >
@@ -380,7 +389,8 @@ const EmployeeManager = () => {
                                             </button>
                                             <button
                                                 className="btn btn-danger btn-icon"
-                                                onClick={async () => {
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
                                                     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
                                                         setLoading(true);
                                                         const token = localStorage.getItem('token');

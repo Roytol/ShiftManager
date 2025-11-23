@@ -289,6 +289,11 @@ tbody tr:hover {
   padding: 1rem;
 }
 
+/* Mobile-only elements */
+.mobile-chevron {
+  display: none;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .container {
@@ -319,21 +324,157 @@ tbody tr:hover {
     justify-content: space-between;
   }
 
-  /* Make tables scrollable */
-  .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* Prevent iOS Zoom on inputs */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 
-  /* Adjust buttons for touch */
-  .btn {
-    padding: 0.75rem 1rem;
-    /* Larger touch target */
+  /* Mobile Table "Card View" */
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
   }
 
-  /* Stack form groups if needed */
-  .form-group {
+  /* Hide table headers (but not display: none for accessibility) */
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
     margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  td {
+    /* Behave like a "row" */
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    padding-left: 40% !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  td:last-child {
+    border-bottom: none;
+  }
+
+  td:before {
+    /* Now like a table header */
+    position: absolute;
+    /* Top/left values mimic padding */
+    left: 1rem;
+    width: 35%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    content: attr(data-label);
+  }
+
+  /* Specific fix for the "Actions" column or buttons */
+  td button {
+    margin-left: 0;
+    /* Reset auto margin */
+  }
+
+  /* Fix for expanded details row container */
+  tr.expanded-row-content {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    margin-bottom: 0;
+  }
+
+  td.expanded-details-cell {
+    display: block !important;
+    width: 100%;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  td.expanded-details-cell:before {
+    content: none !important;
+    /* No label for the container cell */
+  }
+
+  /* Ensure content in cells aligns correctly */
+  td>div {
+    width: 100%;
+    /* Ensure inner divs take full width for proper flex alignment */
+  }
+
+  /* Fix for Employee Name alignment - LEFT ALIGN as requested */
+  td[data-label="Name"]>div,
+  td[data-label="Employee"]>div {
+    justify-content: flex-start !important;
+    /* Align text to the LEFT side */
+  }
+
+  /* Mobile Expandable Rows Pattern */
+  tr.mobile-collapsed td:not([data-label="Name"]):not([data-label="Task"]) {
+    display: none !important;
+  }
+
+  tr.mobile-expanded td {
+    display: flex !important;
+    /* Show all cells when expanded */
+  }
+
+  /* Chevron for mobile expand */
+  .mobile-chevron {
+    display: inline-block !important;
+    /* Override global display: none */
+    margin-left: 0.5rem;
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+  }
+
+  .mobile-expanded .mobile-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Ensure the clickable row looks interactive */
+  tr.mobile-collapsed,
+  tr.mobile-expanded {
+    cursor: pointer;
+  }
+
+  /* Hide label for Name column in card view as it's self-explanatory */
+  td[data-label="Name"]:before {
+    content: none !important;
+    display: none !important;
+  }
+
+  td[data-label="Name"] {
+    padding-left: 0.75rem !important;
+    /* Reset the large padding used for label space */
+  }
+
+  /* Fix for Actions alignment */
+  td[data-label="Actions"] {
+    justify-content: space-between;
+  }
+
+  td[data-label="Actions"]>div {
+    justify-content: flex-end;
   }
 
   /* Admin Tabs Mobile Grid */

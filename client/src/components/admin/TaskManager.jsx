@@ -10,6 +10,7 @@ export default function TaskManager() {
     const [showCreateTask, setShowCreateTask] = useState(false);
 
     const [loading, setLoading] = useState(false);
+    const [expandedTaskId, setExpandedTaskId] = useState(null); // For mobile expansion
 
     useEffect(() => {
         fetchTasks();
@@ -190,24 +191,33 @@ export default function TaskManager() {
                                 </tr>
                             ) : (
                                 tasks.map((task) => (
-                                    <tr key={task.id}>
-                                        <td>{task.name}</td>
-                                        <td>
+                                    <tr
+                                        key={task.id}
+                                        className={expandedTaskId === task.id ? 'mobile-expanded' : 'mobile-collapsed'}
+                                        onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                    >
+                                        <td data-label="Name">
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                {task.name}
+                                                <span className="mobile-chevron">▼</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Status">
                                             <span className={`status-badge status-${task.status}`}>
                                                 {task.status}
                                             </span>
                                         </td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <td data-label="Actions">
+                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                 <button
-                                                    onClick={() => toggleTaskStatus(task)}
+                                                    onClick={(e) => { e.stopPropagation(); toggleTaskStatus(task); }}
                                                     className={`btn btn-sm ${task.status === 'active' ? 'btn-secondary' : 'btn-success'}`}
                                                     disabled={loading}
                                                 >
                                                     {task.status === 'active' ? 'Deactivate' : 'Activate'}
                                                 </button>
                                                 <button
-                                                    onClick={() => setEditingTask(task)}
+                                                    onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
                                                     className="btn btn-secondary btn-icon"
                                                     title="Edit Task"
                                                     disabled={loading}
@@ -218,7 +228,7 @@ export default function TaskManager() {
                                                     </svg>
                                                 </button>
                                                 <button
-                                                    onClick={() => deleteTask(task)}
+                                                    onClick={(e) => { e.stopPropagation(); deleteTask(task); }}
                                                     className="btn btn-danger btn-icon"
                                                     title="Delete Task"
                                                     disabled={loading}

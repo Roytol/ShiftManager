@@ -329,8 +329,8 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                 }}
                 onClick={() => setExpanded(!expanded)}
             >
-                <td style={{ padding: '1rem 0.5rem', fontWeight: '600' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <td data-label="Employee" style={{ padding: '1rem 0.5rem', fontWeight: '600' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-start' }}>
                         <span style={{
                             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
                             transition: 'transform 0.2s'
@@ -338,21 +338,21 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                         {group.user_name}
                     </div>
                 </td>
-                <td style={{ padding: '1rem 0.5rem' }}>{formatDate(group.date)}</td>
-                <td style={{ padding: '1rem 0.5rem' }}>{group.shifts.length} shifts</td>
-                <td style={{ padding: '1rem 0.5rem', fontWeight: '600', color: 'var(--primary-color)' }}>
+                <td data-label="Date" style={{ padding: '1rem 0.5rem' }}>{formatDate(group.date)}</td>
+                <td data-label="Shifts" style={{ padding: '1rem 0.5rem' }}>{group.shifts.length} shifts</td>
+                <td data-label="Total Duration" style={{ padding: '1rem 0.5rem', fontWeight: '600', color: 'var(--primary-color)' }}>
                     {formatDuration(group.total_hours)}
                 </td>
-                <td style={{ padding: '1rem 0.5rem' }}>
+                <td data-label="Actions" style={{ padding: '1rem 0.5rem' }}>
                     <button className="btn btn-sm btn-secondary">
                         {expanded ? 'Collapse' : 'Expand'}
                     </button>
                 </td>
             </tr>
             {expanded && (
-                <tr>
-                    <td colSpan="5" style={{ padding: '0 0 1rem 0', borderBottom: '1px solid var(--border-color)' }}>
-                        <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '0.5rem 2rem' }}>
+                <tr className="expanded-row-content">
+                    <td colSpan="5" className="expanded-details-cell" style={{ padding: '0 0 1rem 0', borderBottom: '1px solid var(--border-color)' }}>
+                        <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '0.5rem 1rem' }}>
                             <table style={{ width: '100%', fontSize: '0.9rem' }}>
                                 <thead>
                                     <tr style={{ color: 'var(--text-secondary)' }}>
@@ -365,12 +365,12 @@ function GroupedShiftRow({ group, onEdit, onDelete }) {
                                 <tbody>
                                     {group.shifts.map(shift => (
                                         <tr key={shift.id} style={{ borderTop: '1px solid var(--border-color-light)' }}>
-                                            <td style={{ padding: '0.5rem' }}>{shift.task_name}</td>
-                                            <td style={{ padding: '0.5rem' }}>
+                                            <td data-label="Task" style={{ padding: '0.5rem' }}>{shift.task_name}</td>
+                                            <td data-label="Time" style={{ padding: '0.5rem' }}>
                                                 {formatTime(shift.start_time)} - {shift.end_time ? formatTime(shift.end_time) : 'Active'}
                                             </td>
-                                            <td style={{ padding: '0.5rem' }}>{formatDuration(shift.total_hours)}</td>
-                                            <td style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                            <td data-label="Duration" style={{ padding: '0.5rem' }}>{formatDuration(shift.total_hours)}</td>
+                                            <td data-label="Actions" style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                 <button
                                                     className="btn btn-secondary btn-icon"
                                                     onClick={(e) => { e.stopPropagation(); onEdit(shift); }}

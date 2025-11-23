@@ -23,7 +23,7 @@ export default function EmployeeDashboard() {
     const fetchStatus = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/status`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/status`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -35,31 +35,40 @@ export default function EmployeeDashboard() {
         }
     };
 
-    const handleClockIn = async (taskId) => {
+    const [clockingIn, setClockingIn] = useState(false);
+
+    const handleClockIn = async (taskId, notes) => {
+        setClockingIn(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-in`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/clock-in`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ task_id: taskId })
+                body: JSON.stringify({ task_id: taskId, notes })
             });
             if (res.ok) {
                 await fetchStatus();
                 setIsModalOpen(false);
                 setRefreshHistory(prev => prev + 1);
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Failed to clock in');
             }
         } catch (err) {
             console.error(err);
+            alert('Failed to clock in');
+        } finally {
+            setClockingIn(false);
         }
     };
 
     const handleClockOut = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-out`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/clock-out`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -102,6 +111,7 @@ export default function EmployeeDashboard() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={handleClockIn}
+                loading={clockingIn}
             />
         </div>
     );

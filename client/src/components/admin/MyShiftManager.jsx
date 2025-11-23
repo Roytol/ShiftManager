@@ -19,7 +19,7 @@ const MyShiftManager = () => {
     const fetchStatus = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/status`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/status`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -35,7 +35,7 @@ const MyShiftManager = () => {
         setActionLoading(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-in`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/clock-in`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ const MyShiftManager = () => {
         setActionLoading(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`${API_BASE_URL}/my-shifts/clock-out`, {
+            const res = await fetch(`${API_BASE_URL}/shifts/clock-out`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });

@@ -33,7 +33,8 @@ export default function LoginPage() {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+            minHeight: '100vh',
+            background: 'var(--background-color)'
         }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
                 <h1 style={{ textAlign: 'center', marginBottom: '0.5rem', color: 'var(--primary-color)', fontSize: '2.5rem' }}>ShiftManager</h1>

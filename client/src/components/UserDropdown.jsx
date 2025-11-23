@@ -1,6 +1,55 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UserSettingsModal from './UserSettingsModal';
+import { useTheme } from '../context/ThemeContext';
+
+function ThemeToggleDropdownItem() {
+    const { theme, toggleTheme } = useTheme();
+    return (
+        <button
+            onClick={toggleTheme}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                width: '100%',
+                padding: '0.75rem 1rem',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                fontSize: '1rem',
+                borderRadius: 'var(--radius-md)'
+            }}
+            className="dropdown-item"
+        >
+            {theme === 'light' ? (
+                <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    Dark Mode
+                </>
+            ) : (
+                <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    Light Mode
+                </>
+            )}
+        </button>
+    );
+}
 
 export default function UserDropdown() {
     const { user, logout } = useAuth();
@@ -36,7 +85,8 @@ export default function UserDropdown() {
                         textAlign: 'right',
                         padding: '0.5rem',
                         borderRadius: 'var(--radius-md)',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
+                        color: 'var(--text-primary)'
                     }}
                     className="user-dropdown-btn"
                 >
@@ -105,6 +155,10 @@ export default function UserDropdown() {
                             </svg>
                             Settings
                         </button>
+
+                        <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }}></div>
+
+                        <ThemeToggleDropdownItem />
 
                         <button
                             onClick={logout}

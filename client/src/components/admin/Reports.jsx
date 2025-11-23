@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { formatDate, formatTime, formatDuration } from '../../utils/formatters';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function Reports() {
     const [shifts, setShifts] = useState([]);
@@ -13,6 +14,7 @@ export default function Reports() {
     });
     const [exportFormat, setExportFormat] = useState('csv');
     const [stats, setStats] = useState({ totalHours: 0, taskDistribution: {} });
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchShifts();
@@ -24,6 +26,7 @@ export default function Reports() {
     }, [shifts, filters]);
 
     const fetchShifts = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         // Original filters were employeeId, month, year. New snippet suggests user_id, start_date, end_date.
         // For now, I'll adapt to the existing filters structure while replacing the URL.
@@ -42,6 +45,8 @@ export default function Reports() {
             setShifts(data);
         } catch (err) {
             console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -270,7 +275,13 @@ export default function Reports() {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.keys(stats.taskDistribution).length > 0 ? (
+                            {loading ? (
+                                <tr className="loading-row">
+                                    <td colSpan="3" className="loading-cell">
+                                        <LoadingSpinner />
+                                    </td>
+                                </tr>
+                            ) : Object.keys(stats.taskDistribution).length > 0 ? (
                                 Object.keys(stats.taskDistribution).sort().map(taskName => {
                                     const hours = stats.taskDistribution[taskName];
                                     const percentage = stats.totalHours > 0 ? ((hours / stats.totalHours) * 100).toFixed(2) + '%' : '0%';

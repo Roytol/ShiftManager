@@ -266,27 +266,28 @@ export default function ShiftManager() {
                         </thead>
                         <tbody>
                             {loading && Object.keys(groupedShifts).length === 0 ? (
-                                <tr>
-                                    <td colSpan="5">
-                                        <LoadingSpinner />
-                                    </td>
-                                </tr>
-                            ) : Object.keys(groupedShifts).length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                                        No shifts found matching your filters.
-                                    </td>
-                                </tr>
-                            ) : (
-                                Object.values(groupedShifts).map(group => (
-                                    <GroupedShiftRow
-                                        key={group.id}
-                                        group={group}
-                                        onEdit={setEditingShift}
-                                        onDelete={handleDeleteShift}
-                                    />
-                                ))
-                            )}
+                                { loading && Object.keys(groupedShifts).length === 0 ? (
+                                    <tr className="loading-row">
+                                        <td colSpan="5" className="loading-cell">
+                                            <LoadingSpinner />
+                                        </td>
+                                    </tr>
+                                ) : Object.keys(groupedShifts).length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                                            No shifts found matching your filters.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    Object.values(groupedShifts).map(group => (
+                                        <GroupedShiftRow
+                                            key={group.id}
+                                            group={group}
+                                            onEdit={setEditingShift}
+                                            onDelete={handleDeleteShift}
+                                        />
+                                    ))
+                                )}
                         </tbody>
                     </table>
                 </div>

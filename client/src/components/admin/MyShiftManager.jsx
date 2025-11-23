@@ -3,6 +3,7 @@ import API_BASE_URL from '../../config';
 import ClockButton from '../ClockButton';
 import TaskSelectorModal from '../TaskSelectorModal';
 import ShiftHistory from '../ShiftHistory';
+import LoadingSpinner from '../LoadingSpinner';
 
 const MyShiftManager = () => {
     const [currentShift, setCurrentShift] = useState(null);
@@ -17,6 +18,7 @@ const MyShiftManager = () => {
     }, []);
 
     const fetchStatus = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/shifts/status`, {
@@ -24,9 +26,9 @@ const MyShiftManager = () => {
             });
             const data = await res.json();
             setCurrentShift(data);
-            setLoading(false);
         } catch (err) {
             console.error(err);
+        } finally {
             setLoading(false);
         }
     };
@@ -74,7 +76,11 @@ const MyShiftManager = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <LoadingSpinner />
+        </div>
+    );
 
     return (
         <div>

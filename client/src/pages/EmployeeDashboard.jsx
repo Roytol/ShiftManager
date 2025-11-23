@@ -21,6 +21,7 @@ export default function EmployeeDashboard() {
     }, []);
 
     const fetchStatus = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/shifts/status`, {
@@ -28,9 +29,9 @@ export default function EmployeeDashboard() {
             });
             const data = await res.json();
             setCurrentShift(data);
-            setLoading(false);
         } catch (err) {
             console.error(err);
+        } finally {
             setLoading(false);
         }
     };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { formatDate, formatTime } from '../../utils/formatters';
 import API_BASE_URL from '../../config';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function ChangeRequests() {
     const [requests, setRequests] = useState([]);
@@ -11,6 +12,7 @@ export default function ChangeRequests() {
     }, []);
 
     const fetchRequests = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/admin/change-requests`, {
@@ -18,10 +20,10 @@ export default function ChangeRequests() {
             });
             const data = await res.json();
             setRequests(data);
-            setLoading(false);
         } catch (err) {
             console.error(err);
-            setLoading(false); // Ensure loading state is reset even on error
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -59,7 +61,11 @@ export default function ChangeRequests() {
             .catch((err) => console.error(err));
     };
 
-    if (loading) return <p>Loading requests...</p>;
+    if (loading) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <LoadingSpinner />
+        </div>
+    );
 
     return (
         <div className="card">

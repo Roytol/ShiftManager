@@ -14,6 +14,7 @@ const ShiftHistory = () => {
     }, []);
 
     const fetchHistory = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE_URL}/shifts/my-history`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -23,7 +24,10 @@ const ShiftHistory = () => {
                 setShifts(data);
                 setLoading(false);
             })
-            .catch((err) => console.error(err));
+            .catch((err) => {
+                console.error(err);
+                setLoading(false);
+            });
     };
 
     const handleRequestChange = async (requestData) => {
@@ -81,8 +85,8 @@ const ShiftHistory = () => {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr>
-                                <td colSpan="4">
+                            <tr className="loading-row">
+                                <td colSpan="4" className="loading-cell">
                                     <LoadingSpinner />
                                 </td>
                             </tr>
@@ -109,7 +113,7 @@ const ShiftHistory = () => {
                 <RequestEditModal
                     shift={editingShift}
                     onClose={() => setEditingShift(null)}
-                    onRequest={handleRequestEdit}
+                    onRequest={handleRequestChange}
                 />
             )}
         </div>

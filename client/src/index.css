@@ -415,6 +415,26 @@ tbody tr:hover {
     /* No label for the container cell */
   }
 
+  /* Fix for Loading Spinner in Tables */
+  tr.loading-row {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  td.loading-cell {
+    padding-left: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 200px;
+    border: none !important;
+  }
+
+  td.loading-cell:before {
+    content: none !important;
+  }
+
   /* Ensure content in cells aligns correctly */
   td>div {
     width: 100%;

@@ -17,6 +17,7 @@ export default function TaskManager() {
     }, []);
 
     const fetchTasks = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/tasks`, {
@@ -26,6 +27,8 @@ export default function TaskManager() {
             setTasks(data);
         } catch (err) {
             console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 

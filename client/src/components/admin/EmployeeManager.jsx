@@ -24,6 +24,7 @@ const EmployeeManager = () => {
     }, []);
 
     const fetchEmployees = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         try {
             const res = await fetch(`${API_BASE_URL}/users`, {
@@ -38,6 +39,8 @@ const EmployeeManager = () => {
         } catch (err) {
             console.error(err);
             setError(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 

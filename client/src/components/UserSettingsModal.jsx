@@ -11,6 +11,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
         birthdate: ''
     });
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -44,6 +45,7 @@ const UserSettingsModal = ({ user, onClose, onUpdate }) => {
                 setLoading(false);
             }
         }
+        fetchUserData();
     }, [user]);
 
     const handleSubmit = (e) => {

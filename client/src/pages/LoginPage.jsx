@@ -37,7 +37,7 @@ export default function LoginPage() {
     const toggleInspectModal = () => {
         if (!showInspectModal) {
             // Log analytics event
-            fetch(`${API_BASE_URL}/api/analytics/log`, {
+            fetch(`${API_BASE_URL}/analytics/log`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ event_type: 'inspect_click' })

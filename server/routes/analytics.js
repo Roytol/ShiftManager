@@ -24,4 +24,23 @@ router.post('/log', async (req, res) => {
     }
 });
 
+// Debug Endpoint
+router.get('/debug', async (req, res) => {
+    try {
+        const result = await db.query('SELECT count(*) FROM analytics_events');
+        const rows = await db.query('SELECT * FROM analytics_events ORDER BY created_at DESC LIMIT 5');
+        res.json({
+            count: result.rows[0].count,
+            recent: rows.rows,
+            message: 'Analytics table is accessible'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            message: 'Database error or table missing',
+            error: err.message
+        });
+    }
+});
+
 module.exports = router;

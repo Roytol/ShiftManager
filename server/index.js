@@ -33,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 app.get('/', (req, res) => {
     res.send('Time Tracking API is running');

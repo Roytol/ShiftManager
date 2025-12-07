@@ -18,7 +18,15 @@ export const translations = {
         email: "Email",
         password: "Password",
         sign_in: "Sign In",
+        signup: "Sign Up",
+        sign_in: "Sign In",
+        signup: "Sign Up",
         signing_in: "Signing in...",
+        signing_up: "Signing up...",
+        came_to_inspect: "Came to inspect?",
+        demo_credentials: "Demo Credentials",
+        copy: "Copy",
+        copied: "Copied!",
 
         // Dashboard
         clock_in: "Clock In",
@@ -238,7 +246,16 @@ export const translations = {
         email: "אימייל",
         password: "סיסמה",
         sign_in: "התחבר",
+        signup: "הרשמה",
         signing_in: "מתחבר...",
+        sign_in: "התחבר",
+        signup: "הרשמה",
+        signing_in: "מתחבר...",
+        signing_up: "נרשם...",
+        came_to_inspect: "באת להתרשם?",
+        demo_credentials: "פרטי התחברות לדוגמה",
+        copy: "העתק",
+        copied: "הועתק!",
 
         // Dashboard
         clock_in: "כניסה למשמרת",

@@ -1,0 +1,21 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at 00:00 UTC every day
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Keep-Alive Endpoint
+        run: |
+          # Replace with your actual production URL or use a secret
+          # Example: curl https://gymtracker.vercel.app/api/keep-alive
+          if [ -z "${{ secrets.KeepAliveURL }}" ]; then
+            echo "URL not set in secrets. Using placeholder."
+            curl -I https://your-project-url.com/api/keep-alive || echo "Failed to ping placeholder"
+          else
+             curl -I ${{ secrets.KeepAliveURL }}
+          fi

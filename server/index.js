@@ -34,6 +34,8 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/keep-alive', require('./routes/keepAlive'));
+
 
 app.get('/', (req, res) => {
     res.send('Time Tracking API is running');
